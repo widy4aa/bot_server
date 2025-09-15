@@ -10,7 +10,7 @@ def help_command(update: Update, context: CallbackContext):
     # Send help in multiple parts to avoid Telegram parsing errors
     
     # Part 1: Command list
-    help_part1 = """📋 DAFTAR PERINTAH BOT SERVER
+    help_part1 = """📋 DAFTAR PERINTAH BOT 
 
 /start - Memulai bot dan salam sambutan
 /help - Menampilkan bantuan ini
