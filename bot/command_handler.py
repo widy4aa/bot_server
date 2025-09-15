@@ -44,7 +44,10 @@ def run_bot():
     dp.add_handler(CommandHandler("download", download.download))
     dp.add_handler(CommandHandler("uploads", uploads.uploads))
     dp.add_handler(CommandHandler("update", update.update))
-    dp.add_handler(CommandHandler("zero-tier-status", zerotier.zero_tier_status))
+    # Use underscore name for CommandHandler (hyphens are not allowed in bot command names)
+    dp.add_handler(CommandHandler("zero_tier_status", zerotier.zero_tier_status))
+    # Also accept the user-friendly hyphen form via regex
+    dp.add_handler(MessageHandler(Filters.regex(r'^/zero-tier-status(\\s|$)'), zerotier.zero_tier_status))
     
     # Register the command handlers in the commands dictionary too (for handle function)
     register("start", start.start)
@@ -54,6 +57,8 @@ def run_bot():
     register("download", download.download)
     register("uploads", uploads.uploads)
     register("update", update.update)
+    # register both forms so handle() can find them
+    register("zero_tier_status", zerotier.zero_tier_status)
     register("zero-tier-status", zerotier.zero_tier_status)
     
     # Add message handler for non-command text processing
