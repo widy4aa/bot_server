@@ -33,33 +33,61 @@ Bot ini memungkinkan admin yang terdaftar untuk menjalankan perintah shell, meng
 
 1. Clone repository:
 
+   ```bash
    git clone https://github.com/widy4aa/bot_server.git
    cd bot_server
+   ```
 
 2. (Opsional) Buat virtual environment dan aktifkan:
 
+   ```bash
    python -m venv venv
-   source venv/bin/activate
+   source venv/bin/activate  # Linux/Mac
+   # atau
+   venv\Scripts\activate     # Windows
+   ```
 
 3. Instal dependensi:
 
+   ```bash
    pip install -r requirements.txt
+   ```
 
-4. Konfigurasi token bot Telegram:
+4. **Konfigurasi Environment:**
 
-   Export environment variable `TELEGRAM_BOT_TOKEN` atau edit `bot/config.py` untuk menaruh token langsung (kurang aman). Contoh:
-
-   export TELEGRAM_BOT_TOKEN="<TOKEN_ANDA>"
+   Copy file `.env.example` ke `.env` dan isi konfigurasi:
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Edit `.env` file:
+   ```env
+   TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+   GEMINI_API_KEY=your_gemini_api_key_here
+   SUPERUSER_IDS=796058175
+   DOWNLOAD_DIR=./Downloads
+   LOG_LEVEL=INFO
+   ```
 
 5. Tambahkan user yang diizinkan di `user.csv` (satu user id per baris). Owner (baris pertama) dapat menjalankan `/update`.
 
-6. (Opsional) Set nilai SUPERUSER_IDS di `bot/config.py` untuk user yang boleh menjalankan `/sudo`.
+6. Jalankan bot:
 
-7. Jalankan bot:
-
+   ```bash
    python main.py
+   ```
 
 Bot akan mulai polling dan siap menerima perintah dari user yang terdaftar.
+
+## Konfigurasi Environment
+
+Bot menggunakan file `.env` untuk konfigurasi. Variabel yang tersedia:
+
+- `TELEGRAM_BOT_TOKEN` - Token bot Telegram (wajib)
+- `GEMINI_API_KEY` - API key Google Gemini untuk fitur AI (opsional)
+- `SUPERUSER_IDS` - Daftar user ID yang memiliki akses superuser (pisahkan dengan koma)
+- `DOWNLOAD_DIR` - Direktori untuk menyimpan file download (default: ./Downloads)
+- `LOG_LEVEL` - Level logging (DEBUG, INFO, WARNING, ERROR)
 
 ## Konfigurasi penting
 

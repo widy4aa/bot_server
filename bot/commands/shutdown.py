@@ -21,26 +21,24 @@ def shutdown(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     
     # Check if user is authorized (owner or superuser)
-    from bot.config import SUPERUSER_IDS
+    from bot.config import Config
     
     # Get owner ID from user.csv
     try:
-        csv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'user.csv')
-        with open(csv_path, 'r') as f:
+        with open(Config.AUTHORIZED_IDS_FILE_PATH, 'r') as f:
             owner_id = int(f.readline().strip())
     except Exception:
         owner_id = None
     
     # Only owner or superuser can shutdown
-    if user_id != owner_id and user_id not in SUPERUSER_IDS:
+    if user_id != owner_id and user_id not in Config.SUPERUSER_IDS:
         update.message.reply_text("🚫 Akses ditolak. Hanya owner atau superuser yang dapat mematikan bot.")
         return
     
     # Log shutdown attempt
-    log_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'bot_commands.log')
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
     try:
-        with open(log_file, 'a') as f:
+        with open(Config.LOG_FILE_PATH, 'a') as f:
             f.write(f"[{timestamp}] SHUTDOWN by user {user_id}\n")
     except Exception:
         pass

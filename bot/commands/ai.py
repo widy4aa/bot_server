@@ -2,6 +2,7 @@ import os
 import requests
 from telegram import Update
 from telegram.ext import CallbackContext
+from bot.config import Config
 
 # Store API keys per user (in memory - resets on bot restart)
 user_api_keys = {}
@@ -20,7 +21,12 @@ API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2
 
 
 def ai_api_command(update: Update, context: CallbackContext):
-    """Handle /ai-api <key> — set user's API key"""
+    """Handle /ai_api <key> — set user's API key"""
+    # Check if global API key is available
+    if Config.GEMINI_API_KEY:
+        update.message.reply_text("✅ API key sudah dikonfigurasi secara global. Anda bisa langsung menggunakan /ai")
+        return
+    
     # Support both CommandHandler (context.args) and MessageHandler (raw text)
     api_key = None
     if context.args:
@@ -52,9 +58,11 @@ def ai_command(update: Update, context: CallbackContext):
     """Handle /ai <prompt> — send prompt to Google Gemini API with onee-san character"""
     user_id = update.effective_user.id
     
-    # Check if user has set an API key
-    if user_id not in user_api_keys:
-        update.message.reply_text("❌ Kamu belum mengatur API key. Gunakan /ai_api <key> terlebih dahulu.")
+    # Check for API key (global or user-specific)
+    api_key = Config.GEMINI_API_KEY or user_api_keys.get(user_id)
+    
+    if not api_key:
+        update.message.reply_text("❌ Kamu belum mengatur API key. Gunakan /ai_api <key> terlebih dahulu atau minta admin mengatur GEMINI_API_KEY di .env")
         return
     
     # Get prompt from message text or reply
@@ -86,7 +94,7 @@ def ai_command(update: Update, context: CallbackContext):
 
     headers = {
         'Content-Type': 'application/json',
-        'X-goog-api-key': user_api_keys[user_id]
+        'X-goog-api-key': api_key
     }
 
     try:

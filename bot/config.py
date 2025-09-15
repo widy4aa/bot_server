@@ -1,17 +1,55 @@
 import os
+from dotenv import load_dotenv
+from typing import List
 
-# Bot token dari environment variable atau fallback
-BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8384360540:AAFmWKTMCWxQftIKGswxIEDtMy-YQyYLXy8')
-TOKEN = BOT_TOKEN  # Alias for compatibility
+# Load environment variables from .env file
+load_dotenv()
 
-# Path to authorized users file
-AUTHORIZED_IDS_FILE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'user.csv')
+class Config:
+    """Configuration class for bot settings"""
+    
+    # Bot Configuration
+    BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+    
+    # AI Configuration
+    GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+    
+    # Server Configuration
+    DOWNLOAD_DIR = os.getenv('DOWNLOAD_DIR', './Downloads')
+    LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
+    
+    # Security Configuration
+    SUPERUSER_IDS = [int(id.strip()) for id in os.getenv('SUPERUSER_IDS', '796058175').split(',') if id.strip()]
+    
+    # File Paths
+    BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+    AUTHORIZED_IDS_FILE_PATH = os.path.join(BASE_DIR, 'user.csv')
+    LOG_FILE_PATH = os.path.join(BASE_DIR, 'bot_commands.log')
+    
+    # Ensure download directory exists
+    @classmethod
+    def ensure_directories(cls):
+        """Create necessary directories if they don't exist"""
+        os.makedirs(cls.DOWNLOAD_DIR, exist_ok=True)
+        os.makedirs(os.path.dirname(cls.LOG_FILE_PATH), exist_ok=True)
+    
+    @classmethod
+    def validate_config(cls) -> List[str]:
+        """Validate configuration and return list of missing required values"""
+        missing = []
+        
+        if not cls.BOT_TOKEN:
+            missing.append('TELEGRAM_BOT_TOKEN')
+            
+        if not cls.GEMINI_API_KEY:
+            missing.append('GEMINI_API_KEY (optional but required for AI features)')
+            
+        return missing
 
-# Superuser IDs (can run /sudo and other privileged operations)
-SUPERUSER_IDS = [796058175]  # Add superuser IDs as integers
-
-# Log file for command execution
-LOG_FILE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'bot_commands.log')
-
-# Downloads directory
-DOWNLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'Downloads')
+# For backward compatibility
+TOKEN = Config.BOT_TOKEN
+BOT_TOKEN = Config.BOT_TOKEN
+SUPERUSER_IDS = Config.SUPERUSER_IDS
+DOWNLOAD_DIR = Config.DOWNLOAD_DIR
+AUTHORIZED_IDS_FILE_PATH = Config.AUTHORIZED_IDS_FILE_PATH
+LOG_FILE_PATH = Config.LOG_FILE_PATH

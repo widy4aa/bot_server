@@ -1,16 +1,16 @@
 from telegram import Update
 from telegram.ext import CallbackContext
-from bot.config import SUPERUSER_IDS
+from bot.config import Config
 
 def help_command(update: Update, context: CallbackContext):
     """Handler for /help command"""
     user_id = update.effective_user.id
-    is_super = user_id in SUPERUSER_IDS
+    is_super = user_id in Config.SUPERUSER_IDS
 
     # Send help in multiple parts to avoid Telegram parsing errors
     
     # Part 1: Command list
-    help_part1 = """📋 DAFTAR PERINTAH BOT 
+    help_part1 = """📋 DAFTAR PERINTAH BOT SERVER
 
 /start - Memulai bot dan salam sambutan
 /help - Menampilkan bantuan ini

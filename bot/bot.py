@@ -6,21 +6,20 @@ from telegram import Update, Bot
 from telegram.utils.request import Request as TGRequest
 import telegram
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
-from bot.config import BOT_TOKEN
+from bot.config import Config
 import time
 
 # Configure logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', 
-    level=logging.INFO
+    level=getattr(logging, Config.LOG_LEVEL.upper(), logging.INFO)
 )
 logger = logging.getLogger(__name__)
 
 # Load authorized user IDs from CSV
 AUTHORIZED_USER_IDS: List[int] = []
 try:
-    csv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'user.csv')
-    with open(csv_path, 'r') as file:
+    with open(Config.AUTHORIZED_IDS_FILE_PATH, 'r') as file:
         reader = csv.reader(file)
         for row in reader:
             if row and row[0].strip():  # Skip empty rows
@@ -42,8 +41,7 @@ def authorize(update: Update, context: CallbackContext) -> bool:
 
 def is_superuser(user_id: int) -> bool:
     """Check if user ID is a superuser"""
-    from bot.config import SUPERUSER_IDS
-    return user_id in SUPERUSER_IDS
+    return user_id in Config.SUPERUSER_IDS
 
 def error_handler(update: Update, context: CallbackContext):
     """Handle errors"""
@@ -59,4 +57,12 @@ def handler(update: Update, context: CallbackContext):
 from . import command_handler
 
 def main():
+    # Validate configuration before starting
+    missing_config = Config.validate_config()
+    if missing_config:
+        logger.error(f"Missing required configuration: {', '.join(missing_config)}")
+        logger.error("Please create a .env file with the required configuration. See .env.example for template.")
+        return
+    
+    logger.info("Starting bot with configuration validated")
     command_handler.run_bot()

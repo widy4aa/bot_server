@@ -1,6 +1,6 @@
 from typing import Dict, Callable
 from telegram import Update
-from telegram.ext import CallbackContext, Updater, CommandHandler
+from telegram.ext import CallbackContext, Updater, CommandHandler, MessageHandler, Filters
 
 # Import config first (no circular dependency here)
 from . import config
@@ -32,8 +32,10 @@ def run_bot():
     # Import command modules here to avoid circular imports
     from .commands import start, help, bash, sudo, download, uploads, update, zerotier, ai, shutdown
     
-    from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-    updater = Updater(token=config.BOT_TOKEN, use_context=True)
+    # Ensure directories exist
+    config.Config.ensure_directories()
+    
+    updater = Updater(token=config.Config.BOT_TOKEN, use_context=True)
     dp = updater.dispatcher
     
     # Register all command handlers
@@ -48,6 +50,11 @@ def run_bot():
     dp.add_handler(CommandHandler("zero_tier_status", zerotier.zero_tier_status))
     dp.add_handler(CommandHandler("ai", ai.ai_command))
     dp.add_handler(CommandHandler("ai_api", ai.ai_api_command))
+    
+    # Handle callbacks for start command
+    from telegram.ext import CallbackQueryHandler
+    dp.add_handler(CallbackQueryHandler(start.handle_start_callback))
+    
     # Also accept the user-friendly hyphen form via regex for legacy support
     dp.add_handler(MessageHandler(Filters.regex(r'^/zero-tier-status(\s|$)'), zerotier.zero_tier_status))
     dp.add_handler(MessageHandler(Filters.regex(r'^/ai-api(\s|$)'), ai.ai_api_command))
