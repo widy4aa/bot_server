@@ -17,6 +17,7 @@ Bot ini memungkinkan admin yang terdaftar untuk menjalankan perintah shell, meng
 - /download <url> — Mengunduh file dari URL ke folder `Downloads`.
 - /uploads — Simpan file yang dikirim ke bot ke folder `Downloads`.
 - /update — Menarik update dari GitHub (git pull) dan me-restart bot (hanya owner di user.csv).
+- /shutdown — Matikan bot secara graceful (owner/superuser only).
 - /zero_tier_status — Mengecek status systemd `zerotier-one` dan menjalankan `zerotier-cli` jika tersedia.
 - /ai_api <key> — Set API key untuk AI (Google Gemini).
 - /ai <prompt> — Bertanya ke AI dengan karakter onee-san yang supportif.
@@ -75,6 +76,7 @@ Bot akan mulai polling dan siap menerima perintah dari user yang terdaftar.
 - /zero_tier_status
 - /ai_api AIzaSy... (set API key)
 - /ai Halo kak!
+- /shutdown (owner/superuser only)
 
 Catatan: beberapa perintah akan mengembalikan output panjang — bot otomatis memecah pesan bila terlalu besar.
 

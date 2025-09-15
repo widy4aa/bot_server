@@ -19,13 +19,15 @@ def help_command(update: Update, context: CallbackContext):
 /uploads - Simpan file ke server ATAU kirim file dari server
 /sudo <perintah> - Perintah dengan hak khusus (superuser only)
 /update - Update bot dari GitHub (owner only)
+/shutdown - Matikan bot (owner/superuser only)
 /zero_tier_status - Status ZeroTier service
 /ai_api <key> - Set API key untuk AI (wajib sebelum pakai /ai)
 /ai <prompt> - Tanya AI onee-san (perlu API key dulu)
 
 🔒 AKSES:
 • Hanya user terdaftar di user.csv
-• /sudo hanya untuk superuser"""
+• /sudo hanya untuk superuser
+• /shutdown dan /update hanya untuk owner/superuser"""
 
     if is_super:
         help_part1 += "\n\n✅ Anda adalah superuser"
@@ -61,11 +63,16 @@ def help_command(update: Update, context: CallbackContext):
    /ai Halo kak, bagaimana cara kerja ZeroTier?
    (AI akan jawab dengan karakter onee-san yang supportif)
 
+8) Shutdown bot (owner/superuser):
+   /shutdown
+   (Bot akan mati setelah 3 detik)
+
 ⚠️ CATATAN:
 • Perintah interaktif tidak didukung
 • Gunakan dengan hati-hati
 • Bot auto-split output panjang
-• API key AI disimpan per user (reset saat restart bot)"""
+• API key AI disimpan per user (reset saat restart bot)
+• /shutdown akan mencatat log sebelum mematikan bot"""
 
     # Send all parts
     try:

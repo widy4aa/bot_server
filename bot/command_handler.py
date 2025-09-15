@@ -30,7 +30,7 @@ def handle(update: Update, context: CallbackContext):
 
 def run_bot():
     # Import command modules here to avoid circular imports
-    from .commands import start, help, bash, sudo, download, uploads, update, zerotier, ai
+    from .commands import start, help, bash, sudo, download, uploads, update, zerotier, ai, shutdown
     
     from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
     updater = Updater(token=config.BOT_TOKEN, use_context=True)
@@ -44,6 +44,7 @@ def run_bot():
     dp.add_handler(CommandHandler("download", download.download))
     dp.add_handler(CommandHandler("uploads", uploads.uploads))
     dp.add_handler(CommandHandler("update", update.update))
+    dp.add_handler(CommandHandler("shutdown", shutdown.shutdown))
     dp.add_handler(CommandHandler("zero_tier_status", zerotier.zero_tier_status))
     dp.add_handler(CommandHandler("ai", ai.ai_command))
     dp.add_handler(CommandHandler("ai_api", ai.ai_api_command))
@@ -59,6 +60,7 @@ def run_bot():
     register("download", download.download)
     register("uploads", uploads.uploads)
     register("update", update.update)
+    register("shutdown", shutdown.shutdown)
     register("zero_tier_status", zerotier.zero_tier_status)
     register("ai", ai.ai_command)
     register("ai_api", ai.ai_api_command)
