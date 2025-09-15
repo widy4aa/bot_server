@@ -1,3 +1,5 @@
+[![Linux header](https://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)](https://www.kernel.org/)
+
 # bot_server
 
 Bot Server — Telegram bot to manage server tasks remotely (run shell commands, download files, upload files, check ZeroTier status, perform privileged commands, and auto-update from GitHub).
@@ -89,14 +91,6 @@ Catatan: beberapa perintah akan mengembalikan output panjang — bot otomatis me
 - ``ValueError: Command is not a valid bot command`` — Perintah bot tidak boleh mengandung karakter yang tidak diizinkan (mis. `-`). Bot menangani alias pengguna (mis. `/zero-tier-status`) via regex dan internal command name.
 - Periksa log di console untuk error yang dilaporkan oleh `bot.bot` logger.
 - Jika bot tidak merespon, pastikan token benar, file `user.csv` berisi ID Anda, dan proses Python berjalan.
-
-## Kontribusi
-
-Silakan buat PR atau issue pada repository GitHub: https://github.com/widy4aa/bot_server
-
-## License
-
-Tentukan lisensi proyek Anda di repository (mis. MIT) jika ingin membagikan kode.
 
 ---
 
