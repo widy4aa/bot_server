@@ -1,0 +1,41 @@
+# Ignore Python compiled files and caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignore virtualenvs
+venv/
+.env/
+.venv/
+env/
+
+# Ignore environment files
+.env
+.env.*
+
+# Editor/IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+
+# Logs
+*.log
+
+# Downloads directory (keep .gitkeep if present)
+Downloads/*
+!Downloads/.gitkeep
+
+# Ignore pycache folders in subdirectories
+**/__pycache__/
+
+# Ignore bytecode produced by pytest
+.cache/
+
+# Ignore database or local runtime files
+*.sqlite3
+
+# Ignore other temp files
+*.swp
+*~
