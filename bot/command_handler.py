@@ -30,7 +30,7 @@ def handle(update: Update, context: CallbackContext):
 
 def run_bot():
     # Import command modules here to avoid circular imports
-    from .commands import start, help, bash, sudo, download, uploads, update
+    from .commands import start, help, bash, sudo, download, uploads, update, zerotier
     
     from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
     updater = Updater(token=config.BOT_TOKEN, use_context=True)
@@ -44,6 +44,7 @@ def run_bot():
     dp.add_handler(CommandHandler("download", download.download))
     dp.add_handler(CommandHandler("uploads", uploads.uploads))
     dp.add_handler(CommandHandler("update", update.update))
+    dp.add_handler(CommandHandler("zero-tier-status", zerotier.zero_tier_status))
     
     # Register the command handlers in the commands dictionary too (for handle function)
     register("start", start.start)
@@ -53,6 +54,7 @@ def run_bot():
     register("download", download.download)
     register("uploads", uploads.uploads)
     register("update", update.update)
+    register("zero-tier-status", zerotier.zero_tier_status)
     
     # Add message handler for non-command text processing
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle))
