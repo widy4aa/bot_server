@@ -1,4 +1,4 @@
-[![Linux header](https://raw.githubusercontent.com/widy4aa/bot_server/refs/heads/main/any/linux_header.png)
+[!Linux header](https://raw.githubusercontent.com/widy4aa/bot_server/refs/heads/main/any/linux_header.png)
 
 # bot_server
 
