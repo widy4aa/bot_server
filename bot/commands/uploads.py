@@ -2,6 +2,7 @@ import os
 from telegram import Update
 from telegram.ext import CallbackContext
 from bot.command_handler import register
+from bot.ai_wrapper import ai_render
 
 
 def _human_readable(size_bytes: int) -> str:
@@ -17,7 +18,7 @@ def uploads_command(update: Update, context: CallbackContext):
     message_text = update.message.text or ""
     parts = message_text.split(maxsplit=1)
     if len(parts) < 2:
-        update.message.reply_text("❌ Format: /uploads <path_file>\nContoh: /uploads /home/user/file.zip")
+        update.message.reply_text(ai_render("❌ Format: /uploads <path_file>\nContoh: /uploads /home/user/file.zip"))
         return
 
     raw_path = parts[1].strip()
@@ -25,7 +26,7 @@ def uploads_command(update: Update, context: CallbackContext):
     file_path = os.path.abspath(os.path.expanduser(raw_path))
 
     if not os.path.exists(file_path) or not os.path.isfile(file_path):
-        update.message.reply_text(f"❌ File tidak ditemukan: {file_path}")
+        update.message.reply_text(ai_render(f"❌ File tidak ditemukan: {file_path}"))
         return
 
     try:
@@ -36,7 +37,7 @@ def uploads_command(update: Update, context: CallbackContext):
 
     # Inform user that upload is starting
     try:
-        update.message.reply_text(f"⬆️ File ditemukan: {os.path.basename(file_path)} ({size_hr})\nMulai upload...")
+        update.message.reply_text(ai_render(f"⬆️ File ditemukan: {os.path.basename(file_path)} ({size_hr})\nMulai upload..."))
     except Exception:
         pass
 
@@ -44,12 +45,12 @@ def uploads_command(update: Update, context: CallbackContext):
         with open(file_path, "rb") as f:
             context.bot.send_document(chat_id=update.effective_chat.id, document=f, filename=os.path.basename(file_path))
         try:
-            update.message.reply_text(f"✅ Upload berhasil: {os.path.basename(file_path)} ({size_hr})")
+            update.message.reply_text(ai_render(f"✅ Upload berhasil: {os.path.basename(file_path)} ({size_hr})"))
         except Exception:
             pass
     except Exception as e:
         try:
-            update.message.reply_text(f"❌ Gagal mengupload {os.path.basename(file_path)}: {e}")
+            update.message.reply_text(ai_render(f"❌ Gagal mengupload {os.path.basename(file_path)}: {e}"))
         except Exception:
             pass
 
@@ -57,7 +58,7 @@ def uploads(update: Update, context: CallbackContext):
     """Handler for /uploads command"""
     # Check if a file is attached
     if not update.message.document and not update.message.photo:
-        update.message.reply_text('❌ Silakan lampirkan file bersama dengan perintah /uploads.')
+        update.message.reply_text(ai_render('❌ Silakan lampirkan file bersama dengan perintah /uploads.'))
         return
     
     try:
@@ -77,7 +78,7 @@ def uploads(update: Update, context: CallbackContext):
             
             # Success message with file info
             file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
-            update.message.reply_text(f"✅ File berhasil diunggah: {file_name} ({file_size_mb:.2f} MB)")
+            update.message.reply_text(ai_render(f"✅ File berhasil diunggah: {file_name} ({file_size_mb:.2f} MB)"))
         
         # Handle photo uploads
         elif update.message.photo:
@@ -95,10 +96,10 @@ def uploads(update: Update, context: CallbackContext):
             
             # Success message with file info
             file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
-            update.message.reply_text(f"✅ Foto berhasil diunggah: {file_name} ({file_size_mb:.2f} MB)")
+            update.message.reply_text(ai_render(f"✅ Foto berhasil diunggah: {file_name} ({file_size_mb:.2f} MB)"))
     
     except Exception as e:
-        update.message.reply_text(f"❌ Error saat mengunggah file: {str(e)}")
+        update.message.reply_text(ai_render(f"❌ Error saat mengunggah file: {str(e)}"))
 
 # Register the command
 register("uploads", uploads_command)

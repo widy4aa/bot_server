@@ -8,6 +8,7 @@ from telegram.ext import CallbackContext
 from bot.command_handler import register
 from bot.config import DOWNLOAD_DIR
 import requests
+from bot.ai_wrapper import ai_render
 
 # Ensure download directory exists
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
@@ -43,14 +44,14 @@ def _monitor_by_files(process, start_time, url, chat_id, bot):
                 if newest_file:
                     msg += f"  file terbaru: {newest_file.name}"
                 try:
-                    bot.send_message(chat_id=chat_id, text=msg)
+                    bot.send_message(chat_id=chat_id, text=ai_render(msg))
                 except Exception:
                     pass
                 last_sent = now
             time.sleep(2)
     except Exception as e:
         try:
-            bot.send_message(chat_id=chat_id, text=f"❌ Error monitoring download: {e}")
+            bot.send_message(chat_id=chat_id, text=ai_render(f"❌ Error monitoring download: {e}"))
         except Exception:
             pass
 
@@ -62,7 +63,7 @@ def _monitor_by_files(process, start_time, url, chat_id, bot):
                 downloaded_files.append(file_path)
 
         if not downloaded_files:
-            bot.send_message(chat_id=chat_id, text="✅ Download selesai tetapi tidak ditemukan file baru.")
+            bot.send_message(chat_id=chat_id, text=ai_render("✅ Download selesai tetapi tidak ditemukan file baru."))
             last_download.update({'url': url, 'status': 'completed', 'files': []})
             return
 
@@ -74,7 +75,7 @@ def _monitor_by_files(process, start_time, url, chat_id, bot):
             if file_size_mb < 500:
                 try:
                     try:
-                        bot.send_message(chat_id=chat_id, text=f"✅ Download selesai: {file_path.name} ({file_size_mb:.2f} MB)\nMengirim file via Telegram...")
+                        bot.send_message(chat_id=chat_id, text=ai_render(f"✅ Download selesai: {file_path.name} ({file_size_mb:.2f} MB)\nMengirim file via Telegram..."))
                     except Exception:
                         pass
                     with open(file_path, 'rb') as f:
@@ -86,19 +87,19 @@ def _monitor_by_files(process, start_time, url, chat_id, bot):
                     last_download.update({'url': url, 'status': 'completed', 'files': [str(p) for p in downloaded_files]})
                 except Exception as e:
                     try:
-                        bot.send_message(chat_id=chat_id, text=f"❌ Gagal mengirim file {file_path.name}: {e}")
+                        bot.send_message(chat_id=chat_id, text=ai_render(f"❌ Gagal mengirim file {file_path.name}: {e}"))
                     except Exception:
                         pass
                     last_download.update({'url': url, 'status': 'completed', 'files': [str(p) for p in downloaded_files]})
             else:
                 try:
-                    bot.send_message(chat_id=chat_id, text=f"✅ Download selesai: {file_path.name} ({file_size_mb:.2f} MB)\nℹ️ File terlalu besar untuk dikirim via Telegram (>500MB). Disimpan di server: {file_path}")
+                    bot.send_message(chat_id=chat_id, text=ai_render(f"✅ Download selesai: {file_path.name} ({file_size_mb:.2f} MB)\nℹ️ File terlalu besar untuk dikirim via Telegram (>500MB). Disimpan di server: {file_path}"))
                 except Exception:
                     pass
                 last_download.update({'url': url, 'status': 'completed', 'files': [str(p) for p in downloaded_files]})
     except Exception as e:
         try:
-            bot.send_message(chat_id=chat_id, text=f"❌ Error saat memproses hasil download: {e}")
+            bot.send_message(chat_id=chat_id, text=ai_render(f"❌ Error saat memproses hasil download: {e}"))
         except Exception:
             pass
 
@@ -108,12 +109,12 @@ def download_command(update: Update, context: CallbackContext):
     message_text = update.message.text
     parts = message_text.split(maxsplit=1)
     if len(parts) < 2:
-        update.message.reply_text("❌ Format: /download <URL>\nContoh: /download https://example.com/file.zip")
+        update.message.reply_text(ai_render("❌ Format: /download <URL>\nContoh: /download https://example.com/file.zip"))
         return
 
     url = parts[1].strip()
     if not url or not (url.startswith('http://') or url.startswith('https://')):
-        update.message.reply_text("❌ URL tidak valid. Harus diawali http:// atau https://")
+        update.message.reply_text(ai_render("❌ URL tidak valid. Harus diawali http:// atau https://"))
         return
 
     try:
@@ -131,10 +132,10 @@ def download_command(update: Update, context: CallbackContext):
         # Do not capture stdout; we'll monitor by file sizes instead
         proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except FileNotFoundError:
-        update.message.reply_text("❌ aria2c tidak ditemukan. Pasang aria2c di server.")
+        update.message.reply_text(ai_render("❌ aria2c tidak ditemukan. Pasang aria2c di server."))
         return
     except Exception as e:
-        update.message.reply_text(f"❌ Gagal memulai download: {e}")
+        update.message.reply_text(ai_render(f"❌ Gagal memulai download: {e}"))
         return
 
     chat_id = update.effective_chat.id
@@ -143,11 +144,11 @@ def download_command(update: Update, context: CallbackContext):
     last_download.update({'url': url, 'start_time': start_time, 'status': 'downloading'})
 
     try:
-        update.message.reply_text(f"⏬ Download dimulai untuk URL: {url}\n📂 Lokasi: {DOWNLOAD_DIR}\nSaya akan mengirim progress berkala dan mengirim file jika ukurannya <500MB setelah selesai.")
+        update.message.reply_text(ai_render(f"⏬ Download dimulai untuk URL: {url}\n📂 Lokasi: {DOWNLOAD_DIR}\nSaya akan mengirim progress berkala dan mengirim file jika ukurannya <500MB setelah selesai."))
     except Exception:
         # Fallback plain text without any markup
         try:
-            update.message.reply_text("⏬ Download dimulai. Cek progress nanti.")
+            update.message.reply_text(ai_render("⏬ Download dimulai. Cek progress nanti."))
         except Exception:
             pass
 
@@ -155,10 +156,11 @@ def download_command(update: Update, context: CallbackContext):
     t = threading.Thread(target=_monitor_by_files, args=(proc, start_time, url, chat_id, context.bot), daemon=True)
     t.start()
 
+
 def download(update: Update, context: CallbackContext):
     """Handler for /download command"""
     if not context.args:
-        update.message.reply_text('❌ Perintah download memerlukan URL sebagai argumen.\nContoh: /download https://example.com/file.zip')
+        update.message.reply_text(ai_render('❌ Perintah download memerlukan URL sebagai argumen.\nContoh: /download https://example.com/file.zip'))
         return
     
     url = context.args[0]
@@ -172,7 +174,7 @@ def download(update: Update, context: CallbackContext):
         os.makedirs(DOWNLOAD_DIR, exist_ok=True)
         
         # Download file
-        update.message.reply_text(f"🔄 Mengunduh {url}...")
+        update.message.reply_text(ai_render(f"🔄 Mengunduh {url}..."))
         
         response = requests.get(url, stream=True, timeout=60)
         response.raise_for_status()
@@ -190,16 +192,16 @@ def download(update: Update, context: CallbackContext):
         # Report success
         if total_size > 0:
             size_mb = total_size / (1024 * 1024)
-            update.message.reply_text(f"✅ File berhasil diunduh: {filename} ({size_mb:.2f} MB)")
+            update.message.reply_text(ai_render(f"✅ File berhasil diunduh: {filename} ({size_mb:.2f} MB)"))
         else:
             # Get file size from saved file
             size_mb = os.path.getsize(file_path) / (1024 * 1024)
-            update.message.reply_text(f"✅ File berhasil diunduh: {filename} ({size_mb:.2f} MB)")
+            update.message.reply_text(ai_render(f"✅ File berhasil diunduh: {filename} ({size_mb:.2f} MB)"))
             
     except requests.exceptions.RequestException as e:
-        update.message.reply_text(f"❌ Gagal mengunduh file: {str(e)}")
+        update.message.reply_text(ai_render(f"❌ Gagal mengunduh file: {str(e)}"))
     except Exception as e:
-        update.message.reply_text(f"❌ Error: {str(e)}")
+        update.message.reply_text(ai_render(f"❌ Error: {str(e)}"))
 
 # Register command
 register("download", download_command)

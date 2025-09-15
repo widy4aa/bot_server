@@ -13,6 +13,7 @@ class Config:
     
     # AI Configuration
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+    AI_TEMPLATE = os.getenv('AI_TEMPLATE') or None
     
     # Server Configuration
     DOWNLOAD_DIR = os.getenv('DOWNLOAD_DIR', './Downloads')
@@ -41,6 +42,7 @@ class Config:
         if not cls.BOT_TOKEN:
             missing.append('TELEGRAM_BOT_TOKEN')
             
+        # GEMINI_API_KEY is optional but warn
         if not cls.GEMINI_API_KEY:
             missing.append('GEMINI_API_KEY (optional but required for AI features)')
             
@@ -53,3 +55,4 @@ SUPERUSER_IDS = Config.SUPERUSER_IDS
 DOWNLOAD_DIR = Config.DOWNLOAD_DIR
 AUTHORIZED_IDS_FILE_PATH = Config.AUTHORIZED_IDS_FILE_PATH
 LOG_FILE_PATH = Config.LOG_FILE_PATH
+AI_TEMPLATE = Config.AI_TEMPLATE

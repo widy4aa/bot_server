@@ -8,6 +8,7 @@ import telegram
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 from bot.config import Config
 import time
+from bot.ai_wrapper import ai_send_message
 
 # Configure logging
 logging.basicConfig(
@@ -34,7 +35,8 @@ def authorize(update: Update, context: CallbackContext) -> bool:
     """Check if the user is authorized to use the bot"""
     user_id = update.effective_user.id
     if user_id not in AUTHORIZED_USER_IDS:
-        update.message.reply_text("🚫 Akses Ditolak. Anda tidak memiliki izin untuk menggunakan bot ini.")
+        msg = "Akses Ditolak. Anda tidak memiliki izin untuk menggunakan bot ini."
+        ai_send_message(update, msg)
         logger.warning(f"Unauthorized access attempt from user {user_id}")
         return False
     return True

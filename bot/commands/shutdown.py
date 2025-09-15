@@ -4,12 +4,14 @@ import time
 import threading
 from telegram import Update
 from telegram.ext import CallbackContext
+from bot.ai_wrapper import ai_render
+
 
 def shutdown_bot_delayed(bot, chat_id, delay=3):
     """Shutdown bot after a delay"""
     time.sleep(delay)
     try:
-        bot.send_message(chat_id=chat_id, text="🔴 Bot sedang shutdown...")
+        bot.send_message(chat_id=chat_id, text=ai_render("🔴 Bot sedang shutdown..."))
     except Exception:
         pass
     
@@ -32,7 +34,7 @@ def shutdown(update: Update, context: CallbackContext):
     
     # Only owner or superuser can shutdown
     if user_id != owner_id and user_id not in Config.SUPERUSER_IDS:
-        update.message.reply_text("🚫 Akses ditolak. Hanya owner atau superuser yang dapat mematikan bot.")
+        update.message.reply_text(ai_render("🚫 Akses ditolak. Hanya owner atau superuser yang dapat mematikan bot."))
         return
     
     # Log shutdown attempt
@@ -44,7 +46,7 @@ def shutdown(update: Update, context: CallbackContext):
         pass
     
     # Send confirmation message
-    update.message.reply_text("⚠️ Bot akan dimatikan dalam 3 detik...")
+    update.message.reply_text(ai_render("⚠️ Bot akan dimatikan dalam 3 detik..."))
     
     # Start shutdown thread
     thread = threading.Thread(

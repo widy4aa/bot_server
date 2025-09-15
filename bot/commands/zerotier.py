@@ -2,6 +2,7 @@ from telegram import Update
 from telegram.ext import CallbackContext
 import subprocess
 import shutil
+from bot.ai_wrapper import ai_render, ai_send_message
 
 
 def _run_cmd(cmd_list, timeout=10):
@@ -92,11 +93,48 @@ def zero_tier_status(update: Update, context: CallbackContext):
 
     reply = "\n\n".join(parts)
 
+    # Send rendered reply via AI renderer with HTML formatting
+    rendered = ai_render(reply)
+
     # Split long output into chunks
     max_len = 4000
-    if len(reply) <= max_len:
-        update.message.reply_text(f"```\n{reply}\n```", parse_mode='Markdown')
-    else:
-        for i in range(0, len(reply), max_len):
-            chunk = reply[i:i+max_len]
-            update.message.reply_text(f"```\n{chunk}\n```", parse_mode='Markdown')
+    try:
+        if len(rendered) <= max_len:
+            ai_send_message(update, rendered)
+        else:
+            for i in range(0, len(rendered), max_len):
+                chunk = rendered[i:i+max_len]
+                ai_send_message(update, chunk)
+    except Exception:
+        # Fallback with HTML directly
+        if len(rendered) <= max_len:
+            try:
+                update.message.reply_text(rendered, parse_mode="HTML")
+            except Exception:
+                try:
+                    update.message.reply_text(rendered)
+                except Exception:
+                    # callback or other
+                    try:
+                        update.callback_query.message.reply_text(rendered, parse_mode="HTML")
+                    except Exception:
+                        try:
+                            update.callback_query.message.reply_text(rendered)
+                        except Exception:
+                            pass
+        else:
+            for i in range(0, len(rendered), max_len):
+                chunk = rendered[i:i+max_len]
+                try:
+                    update.message.reply_text(chunk, parse_mode="HTML")
+                except Exception:
+                    try:
+                        update.message.reply_text(chunk)
+                    except Exception:
+                        try:
+                            update.callback_query.message.reply_text(chunk, parse_mode="HTML")
+                        except Exception:
+                            try:
+                                update.callback_query.message.reply_text(chunk)
+                            except Exception:
+                                pass

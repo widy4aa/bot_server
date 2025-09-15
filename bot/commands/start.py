@@ -1,6 +1,7 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 import os
+from bot.ai_wrapper import ai_render, ai_send_message
 
 def start(update: Update, context: CallbackContext):
     """Handler for /start command with setup wizard"""
@@ -11,44 +12,12 @@ def start(update: Update, context: CallbackContext):
     from bot.config import Config
     missing_config = Config.validate_config()
     
-    welcome_message = f"""
-🤖 Selamat datang {user_name} di Bot Server Management!
-
-Bot ini memungkinkan Anda untuk mengelola server VPS melalui Telegram.
-
-📊 **Status Konfigurasi:**
-"""
-    
     if missing_config:
-        welcome_message += f"""
-❌ **Konfigurasi Belum Lengkap:**
-• {chr(10).join(missing_config)}
-
-🔧 **Langkah Setup:**
-1. Buat file `.env` di direktori bot
-2. Isi dengan konfigurasi yang diperlukan
-3. Restart bot untuk menerapkan perubahan
-
-📋 **Template .env:**
-```
-TELEGRAM_BOT_TOKEN=your_bot_token
-GEMINI_API_KEY=your_gemini_key
-SUPERUSER_IDS={user_id}
-```
-"""
+        base = f"Selamat datang {user_name}. Sepertinya konfigurasi bot belum lengkap: {', '.join(missing_config)}. Lihat README untuk petunjuk."
     else:
-        welcome_message += "✅ Semua konfigurasi sudah lengkap!"
+        base = f"Halo {user_name}, bot siap digunakan. Ketik /help untuk melihat dokumentasi lengkap."
     
-    welcome_message += f"""
-
-🔐 **Status User:**
-• User ID: `{user_id}`
-• Status: {'✅ Superuser' if user_id in Config.SUPERUSER_IDS else '👤 Regular User'}
-
-📖 Ketik /help untuk melihat daftar perintah yang tersedia.
-
-⚠️ **Peringatan:** Bot ini hanya dapat digunakan oleh pengguna yang terotorisasi.
-"""
+    rendered = ai_render(base)
     
     # Create inline keyboard for quick actions
     keyboard = [
@@ -61,7 +30,12 @@ SUPERUSER_IDS={user_id}
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    update.message.reply_text(welcome_message, parse_mode='Markdown', reply_markup=reply_markup)
+    try:
+        ai_send_message(update, rendered, reply_markup=reply_markup)
+    except Exception:
+        # Fallback without reply_markup
+        ai_send_message(update, rendered)
+
 
 def handle_start_callback(update: Update, context: CallbackContext):
     """Handle callback queries from start command"""
@@ -76,6 +50,7 @@ def handle_start_callback(update: Update, context: CallbackContext):
     elif query.data == 'admin':
         show_admin_panel(update, context)
 
+
 def show_system_status(update: Update, context: CallbackContext):
     """Show system status information"""
     from bot.config import Config
@@ -87,59 +62,54 @@ def show_system_status(update: Update, context: CallbackContext):
         cpu_percent = psutil.cpu_percent(interval=1)
         memory = psutil.virtual_memory()
         disk = psutil.disk_usage('/')
-        
-        status_message = f"""
-📊 **Status Sistem:**
-
-🖥️ **Server Info:**
-• OS: {platform.system()} {platform.release()}
-• CPU: {cpu_percent}%
-• RAM: {memory.percent}% ({memory.used // (1024**3)}GB / {memory.total // (1024**3)}GB)
-• Disk: {disk.percent}% ({disk.used // (1024**3)}GB / {disk.total // (1024**3)}GB)
-
-📁 **Direktori:**
-• Download: {Config.DOWNLOAD_DIR}
-• Log Level: {Config.LOG_LEVEL}
-
-🔐 **Keamanan:**
-• Superusers: {len(Config.SUPERUSER_IDS)}
-• Bot Token: {'✅ Set' if Config.BOT_TOKEN else '❌ Missing'}
-• Gemini API: {'✅ Set' if Config.GEMINI_API_KEY else '❌ Missing'}
-"""
+        status_message = (f"<b>🖥️ System Status</b>\n\n"
+                         f"<pre>Server: {platform.system()} {platform.release()}\n"
+                         f"CPU:    {cpu_percent}%\n"
+                         f"RAM:    {memory.percent}%\n"
+                         f"Disk:   {disk.percent}%</pre>\n\n"
+                         f"Semua layanan berjalan dengan normal 💖")
     except Exception as e:
-        status_message = f"❌ Error getting system status: {str(e)}"
+        status_message = f"Gagal mengambil status sistem: {e}"
     
-    if update.callback_query:
-        update.callback_query.edit_message_text(status_message, parse_mode='Markdown')
-    else:
-        update.message.reply_text(status_message, parse_mode='Markdown')
+    try:
+        if update.callback_query:
+            update.callback_query.message.reply_text(status_message, parse_mode="HTML")
+        else:
+            update.message.reply_text(status_message, parse_mode="HTML")
+    except Exception:
+        # fallback without HTML
+        try:
+            status_message = status_message.replace('<b>', '').replace('</b>', '')
+            status_message = status_message.replace('<pre>', '').replace('</pre>', '')
+            if update.callback_query:
+                update.callback_query.message.reply_text(status_message)
+            else:
+                update.message.reply_text(status_message)
+        except Exception:
+            pass
+
 
 def show_admin_panel(update: Update, context: CallbackContext):
     """Show admin panel for superusers"""
     user_id = update.effective_user.id
     from bot.config import Config
-    
     if user_id not in Config.SUPERUSER_IDS:
-        update.callback_query.edit_message_text("🚫 Access denied. Superuser only.")
+        try:
+            update.callback_query.message.reply_text("🚫 Access denied. Superuser only.")
+        except Exception:
+            update.message.reply_text("🚫 Access denied. Superuser only.")
         return
-    
-    admin_message = """
-⚙️ **Admin Panel**
-
-Available admin commands:
-• `/sudo` - Execute privileged commands
-• `/update` - Update bot from GitHub
-• `/shutdown` - Shutdown bot gracefully
-
-📊 Quick status check with /status
-🔧 Configuration management via .env file
-"""
-    
+    admin_message = "Available admin commands:\n- /sudo\n- /update\n- /shutdown"
     keyboard = [
         [InlineKeyboardButton("📊 System Status", callback_data='status')],
         [InlineKeyboardButton("🔄 Restart Bot", callback_data='restart')],
         [InlineKeyboardButton("🔴 Shutdown", callback_data='shutdown_confirm')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    update.callback_query.edit_message_text(admin_message, parse_mode='Markdown', reply_markup=reply_markup)
+    try:
+        update.callback_query.message.reply_text(admin_message, reply_markup=reply_markup)
+    except Exception:
+        try:
+            update.message.reply_text(admin_message, reply_markup=reply_markup)
+        except Exception:
+            update.message.reply_text(admin_message)

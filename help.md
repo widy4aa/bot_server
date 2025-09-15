@@ -1,56 +1,94 @@
 # Bot Server - Panduan & Perintah
 
+Panduan ringkas ini menjelaskan perintah utama, cara pakai AI, dan beberapa catatan operasional.
+
 ## Daftar Perintah
 
-- /start — Memulai bot dan salam sambutan
-- /help — Menampilkan bantuan ini (diambil dari dokumentasi remote)
-- /bash <perintah> — Menjalankan perintah shell (non-interaktif)
-- /download <url> — Mengunduh file dari URL ke folder `Downloads` (aria2c optional)
-- /uploads — Simpan file yang dikirim ke bot ke folder `Downloads` atau kirim file dari server
-- /sudo <perintah> — Menjalankan perintah dengan hak khusus (superuser only)
-- /update — Update bot dari GitHub dan restart (owner only)
-- /shutdown — Matikan bot secara graceful (owner/superuser only)
-- /zero_tier_status — Status ZeroTier service dan zerotier-cli
-- /ai_api <key> — Set API key untuk AI (wajib sebelum pakai /ai jika GEMINI_API_KEY tidak diset)
-- /ai <prompt> — Tanya AI onee-san (perlu API key dulu)
+- **/start**
+  - Memulai bot dan menampilkan tombol cepat (Help, Status, Admin bila punya akses)
+- **/help**
+  - Menampilkan panduan ini
+- **/bash** <perintah>
+  - Menjalankan perintah shell non-interaktif di server
+- **/sudo** <perintah>
+  - Menjalankan perintah dengan hak khusus (hanya superuser)
+- **/download** <url>
+  - Mengunduh file dari URL ke folder Downloads. Jika file kecil, bot akan mengirim via Telegram.
+- **/uploads**
+  - Kirim file ke bot untuk disimpan, atau ambil file dari server dengan `/uploads /path/to/file`
+- **/update**
+  - Tarik update dari GitHub dan restart bot (hanya owner)
+- **/shutdown**
+  - Matikan bot secara graceful (owner/superuser only)
+- **/zero_tier_status**
+  - Periksa status ZeroTier dan zerotier-cli jika tersedia
+- **/ai_api** <key>
+  - Simpan API key Google Gemini untuk pengguna (opsional jika GEMINI_API_KEY global diset)
+- **/ai** <prompt>
+  - Tanyakan ke AI (karakter onee-san). Perlu API key terlebih dahulu.
+
+## Catatan Format Output
+
+Bot sekarang menggunakan format HTML di Telegram untuk:
+- **Bold text** dengan `<b>text</b>`
+- *Italic text* dengan `<i>text</i>`
+- `Inline code` dengan `<code>text</code>`
+- Pre-formatted blocks dengan `<pre>code block</pre>` 
+- [Links](https://github.com/widy4aa/bot_server) dengan `<a href='url'>text</a>`
+
+Output command dan status ditampilkan dalam format `<pre>` untuk memudahkan membaca.
 
 ## Contoh Penggunaan
 
 1) Menjalankan perintah sederhana:
+   ```
    /bash whoami
+   ```
 
 2) Perintah privileged (superuser):
+   ```
    /sudo systemctl status nginx
+   ```
 
 3) Mengunduh file dari URL:
+   ```
    /download https://example.com/file.zip
-   (Jika aria2c tersedia, bot akan memantau via file; file kecil akan dikirim via Telegram)
+   ```
+   (Jika aria2c tersedia, bot memantau proses dan mengirim file jika ukurannya kecil)
 
-4) Mengunggah file dari server ke Telegram:
-   /uploads /path/to/file.zip
+4) Mengunggah file dari Telegram ke server:
+   Kirim file ke bot lalu ketik: `/uploads`
 
-5) Mengatur API AI untuk user:
-   /ai_api AIzaSy...  (atau set GEMINI_API_KEY di .env untuk global)
+5) Mengambil file dari server ke Telegram:
+   ```
+   /uploads /path/to/file
+   ```
+
+6) AI onee-san:
+   ```
+   /ai_api <API_KEY>    # set API key per user
    /ai Jelaskan ZeroTier secara singkat
+   ```
 
-## Catatan Keamanan & Operasional
+## Keamanan & Akses
 
-- Akses dikontrol melalui file `user.csv`. Baris pertama dianggap owner untuk perintah /update.
-- Jangan membagikan token atau API key di publik. Gunakan file `.env` dan .gitignore.
-- Perintah interaktif (editor, apt, passwd, dsb.) tidak didukung via /bash; gunakan /sudo bila diperlukan dan hanya untuk superuser.
-- Bot akan memecah pesan panjang untuk menghindari limit Telegram.
+- Akses dikontrol melalui file `user.csv` (satu user id per baris). Baris pertama dianggap owner.
+- SUPERUSER_IDS di .env menentukan user yang mendapat akses sudo dari bot.
+- Jangan bagikan token atau API key di publik.
 
-## Troubleshooting saat Update (git)
+## Troubleshooting Jaringan dan Reliabilitas
 
-- Pastikan `.gitignore` mengabaikan `__pycache__`, `*.pyc`, dan `.env`.
-- Jika Anda melihat pesan `Please commit your changes or stash them before you merge`, gunakan perintah manual:
-  ```bash
-  git add -A
-  git stash --include-untracked
-  git pull
-  git stash pop
-  ```
-  Perintah `/update` bot telah mencoba melakukan stashing secara otomatis sebelum `git pull`.
+- Bot menggunakan mekanisme retry/backoff untuk polling agar tahan terhadap gangguan jaringan sementara.
+- Jika muncul error koneksi (DNS, RemoteDisconnected, Temporary failure in name resolution), cek:
+  - Koneksi internet: `ping 8.8.8.8`
+  - DNS: `dig +short api.telegram.org` atau `nslookup api.telegram.org`
+  - Pastikan container/VM mewarisi DNS yang benar (`/etc/resolv.conf`)
+  - Jika di belakang proxy, set `HTTP_PROXY` / `HTTPS_PROXY` pada environment yang menjalankan bot
+- Untuk update otomatis dari GitHub: pastikan git bisa jalan dan workspace tidak dalam konflik. Bot mencoba `git stash` otomatis.
+
+## Log & Debug
+
+- Periksa file log `bot_commands.log` dan output konsol untuk melihat error.
 
 ---
 

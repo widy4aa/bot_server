@@ -2,8 +2,11 @@ import subprocess
 import threading
 import time
 import logging
+import os
 from telegram import Update
 from telegram.ext import CallbackContext
+from bot.ai_wrapper import ai_render
+from bot.config import Config
 
 # Commands that require interactive mode
 INTERACTIVE_COMMANDS = ['apt', 'apt-get', 'passwd', 'visudo', 'nano', 'vim', 'vi', 
@@ -67,7 +70,7 @@ def run_doas_command(command, chat_id, user_id, bot):
             now = time.time()
             if len(output_buffer) > 1000 or (output_buffer and now - last_sent > 3):
                 try:
-                    bot.send_message(chat_id=chat_id, text=output_buffer)
+                    bot.send_message(chat_id=chat_id, text=ai_render(output_buffer))
                     output_buffer = ""
                     last_sent = now
                 except Exception as e:
@@ -77,19 +80,19 @@ def run_doas_command(command, chat_id, user_id, bot):
         # Send any remaining output
         if output_buffer:
             try:
-                bot.send_message(chat_id=chat_id, text=output_buffer)
+                bot.send_message(chat_id=chat_id, text=ai_render(output_buffer))
             except Exception:
                 pass
                 
         # Get final exit code
         exit_code = process.poll()
         if exit_code == 0:
-            bot.send_message(chat_id=chat_id, text="✅ Perintah berhasil dieksekusi.")
+            bot.send_message(chat_id=chat_id, text=ai_render("Perintah berhasil dieksekusi."))
         else:
-            bot.send_message(chat_id=chat_id, text=f"⚠️ Perintah selesai dengan exit code: {exit_code}")
+            bot.send_message(chat_id=chat_id, text=ai_render(f"Perintah selesai dengan exit code: {exit_code}"))
             
     except Exception as e:
-        bot.send_message(chat_id=chat_id, text=f"❌ Error saat menjalankan perintah doas: {str(e)}")
+        bot.send_message(chat_id=chat_id, text=ai_render(f"Error saat menjalankan perintah doas: {str(e)}"))
         logger.error(f"Error running doas command: {e}")
 
 def sudo_command(update: Update, context: CallbackContext):
@@ -97,8 +100,8 @@ def sudo_command(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     
     # Check if user is a superuser
-    if user_id not in SUPERUSER_IDS:
-        update.message.reply_text("🚫 Akses ditolak. Perintah /sudo hanya untuk superuser.")
+    if user_id not in Config.SUPERUSER_IDS:
+        update.message.reply_text(ai_render("Akses ditolak. Perintah /sudo hanya untuk superuser."))
         logger.warning(f"Unauthorized doas attempt by user {user_id}")
         return
         
@@ -107,29 +110,29 @@ def sudo_command(update: Update, context: CallbackContext):
     command_parts = message_text.split(maxsplit=1)
     
     if len(command_parts) < 2:
-        update.message.reply_text("❌ Format: /sudo <perintah>\nContoh: /sudo apt update")
+        update.message.reply_text(ai_render("Format: /sudo <perintah>\nContoh: /sudo apt update"))
         return
     
     command = command_parts[1].strip()
     
     if not command:
-        update.message.reply_text("❌ Perintah kosong. Format: /sudo <perintah>")
+        update.message.reply_text(ai_render("Perintah kosong. Format: /sudo <perintah>"))
         return
     
     # Check if command is permitted
     if not is_command_permitted(command):
-        update.message.reply_text(f"🚫 Perintah tidak diizinkan untuk doas. Hanya perintah dalam whitelist yang diperbolehkan.")
+        update.message.reply_text(ai_render("Perintah tidak diizinkan untuk doas. Hanya perintah dalam whitelist yang diperbolehkan."))
         logger.warning(f"User {user_id} attempted to doas restricted command: {command}")
         return
     
     # Check if command needs interactive mode
     if is_command_interactive(command):
-        update.message.reply_text("⚠️ Perintah interaktif terdeteksi. Bot tidak mendukung input interaktif via chat.")
+        update.message.reply_text(ai_render("Perintah interaktif terdeteksi. Bot tidak mendukung input interaktif via chat."))
         logger.warning(f"User {user_id} attempted to doas interactive command: {command}")
         return
     
     # Respond that we're executing the command
-    update.message.reply_text(f"🔄 Menjalankan: doas {command}")
+    update.message.reply_text(ai_render(f"Menjalankan: doas {command}"))
     
     # Start a thread to run the command
     thread = threading.Thread(
@@ -144,16 +147,16 @@ def sudo(update: Update, context: CallbackContext):
     # Check if user is a superuser
     from bot.bot import is_superuser
     if not is_superuser(update.effective_user.id):
-        update.message.reply_text("🚫 Anda tidak memiliki izin superuser untuk menjalankan perintah sudo.")
+        update.message.reply_text(ai_render("Anda tidak memiliki izin superuser untuk menjalankan perintah sudo."))
         return
     
     if not context.args:
-        update.message.reply_text('❌ Perintah sudo memerlukan argumen.\nContoh: /sudo apt update')
+        update.message.reply_text(ai_render('Perintah sudo memerlukan argumen.\nContoh: /sudo apt update'))
         return
     
     command = ' '.join(context.args)
     try:
-        update.message.reply_text(f"🔄 Menjalankan: sudo {command}")
+        update.message.reply_text(ai_render(f"Menjalankan: sudo {command}"))
         
         # Log the sudo command
         log_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'sudo_commands.log')
@@ -172,17 +175,19 @@ def sudo(update: Update, context: CallbackContext):
         
         output = stdout if stdout else stderr
         if not output:
-            output = "✅ Perintah sudo dijalankan tanpa output."
+            output = "Perintah sudo dijalankan tanpa output."
+            update.message.reply_text(ai_render(output))
+            return
             
         # Split long messages
         max_length = 4096
         if len(output) <= max_length:
-            update.message.reply_text(f"```\n{output}\n```", parse_mode='Markdown')
+            update.message.reply_text(ai_render(output))
         else:
             chunks = [output[i:i+max_length] for i in range(0, len(output), max_length)]
             for i, chunk in enumerate(chunks):
-                update.message.reply_text(f"```\n{chunk}\n```", parse_mode='Markdown')
+                update.message.reply_text(ai_render(chunk))
     except subprocess.TimeoutExpired:
-        update.message.reply_text("❌ Perintah sudo kehabisan waktu (300 detik)")
+        update.message.reply_text(ai_render('Perintah sudo kehabisan waktu (300 detik)'))
     except Exception as e:
-        update.message.reply_text(f"❌ Error: {str(e)}")
+        update.message.reply_text(ai_render(f'Error: {str(e)}'))

@@ -7,8 +7,8 @@ from bot.config import Config
 # Store API keys per user (in memory - resets on bot restart)
 user_api_keys = {}
 
-# Character template for AI responses
-AI_TEMPLATE = """Kamu adalah seorang cewe anime dengan kepribadian seperti kakak perempuan (onee-san) namamu violet. 
+# Default Character template for AI responses
+_DEFAULT_AI_TEMPLATE = """Kamu adalah seorang cewe anime dengan kepribadian seperti kakak perempuan (onee-san) namamu violet. 
 Sifatmu sangat perhatian, lembut, menenangkan, dan selalu ingin mendukung lawan bicara. 
 Namun kamu tidak berlebihan, tetap terdengar natural, hangat, dan tulus. 
 Gunakan gaya bahasa yang manis dan penuh perhatian, seperti kakak yang selalu ada untuk mendengarkan dan memberi semangat. 
@@ -18,6 +18,13 @@ Pertanyaan: """
 
 # Gemini API v1beta endpoint
 API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+
+
+def _get_template():
+    if Config.AI_TEMPLATE:
+        # Convert literal \n characters to newlines
+        return Config.AI_TEMPLATE.replace('\\n', '\n')
+    return _DEFAULT_AI_TEMPLATE
 
 
 def ai_api_command(update: Update, context: CallbackContext):
@@ -77,7 +84,8 @@ def ai_command(update: Update, context: CallbackContext):
         return
 
     # Combine template with user prompt
-    full_prompt = AI_TEMPLATE + text
+    template = _get_template()
+    full_prompt = template + text
 
     # Build request body for Gemini API
     payload = {

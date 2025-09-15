@@ -1,44 +1,32 @@
 from telegram import Update
 from telegram.ext import CallbackContext
 from bot.config import Config
-import requests
 import os
+from bot.ai_wrapper import ai_send_message, ai_render
 
-RAW_HELP_URL = 'https://raw.githubusercontent.com/widy4aa/bot_server/refs/heads/main/help.md'
-LOCAL_HELP_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'help.md')
-
-
-def _send_long_text(chat, text, bot):
-    max_len = 4000
-    if len(text) <= max_len:
-        bot.send_message(chat_id=chat, text=text)
-    else:
-        for i in range(0, len(text), max_len):
-            bot.send_message(chat_id=chat, text=text[i:i+max_len])
+RAW_HELP_URL = 'https://github.com/widy4aa/bot_server/blob/main/help.md'
 
 
 def help_command(update: Update, context: CallbackContext):
-    """Handler for /help command"""
+    """Handler for /help command - redirect to GitHub and use AI for friendly intro"""
     user_id = update.effective_user.id
     is_super = user_id in Config.SUPERUSER_IDS
 
-    # Try to fetch remote help.md first
-    try:
-        resp = requests.get(RAW_HELP_URL, timeout=5)
-        if resp.status_code == 200 and resp.text.strip():
-            text = resp.text
-            _send_long_text(update.effective_chat.id, text, context.bot)
-            return
-    except Exception:
-        pass
-
-    # Fallback: load local help.md
-    try:
-        with open(LOCAL_HELP_PATH, 'r') as f:
-            text = f.read()
-            _send_long_text(update.effective_chat.id, text, context.bot)
-            return
-    except Exception as e:
-        # If everything fails, send a short built-in help
-        short_help = "Commands: /start /help /bash /download /uploads /sudo /update /zero_tier_status /ai"
-        update.message.reply_text(short_help)
+    intro = f"Silakan lihat dokumentasi lengkap di: <a href='{RAW_HELP_URL}'>GitHub Documentation</a>\n\nKetik /start untuk melihat menu utama."
+    
+    # Handle both callback queries and regular messages
+    if hasattr(update, 'callback_query') and update.callback_query:
+        # This is from a callback button
+        try:
+            rendered = ai_render(intro)
+            update.callback_query.message.reply_text(rendered, parse_mode="HTML")
+        except Exception:
+            # Fallback without HTML
+            try:
+                rendered = rendered.replace('<a href=', '').replace('</a>', '')
+                update.callback_query.message.reply_text(rendered)
+            except Exception:
+                pass
+    else:
+        # This is a regular /help command
+        ai_send_message(update, intro)
