@@ -2,6 +2,7 @@ import os
 
 # Bot token dari environment variable atau fallback
 BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8384360540:AAFmWKTMCWxQftIKGswxIEDtMy-YQyYLXy8')
+TOKEN = BOT_TOKEN  # Alias for compatibility
 
 # Path to authorized users file
 AUTHORIZED_IDS_FILE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'user.csv')

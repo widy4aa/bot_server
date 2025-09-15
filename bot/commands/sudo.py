@@ -4,8 +4,6 @@ import time
 import logging
 from telegram import Update
 from telegram.ext import CallbackContext
-from bot.command_handler import register
-from bot.config import SUPERUSER_IDS
 
 # Commands that require interactive mode
 INTERACTIVE_COMMANDS = ['apt', 'apt-get', 'passwd', 'visudo', 'nano', 'vim', 'vi', 
@@ -141,5 +139,50 @@ def sudo_command(update: Update, context: CallbackContext):
     thread.daemon = True
     thread.start()
 
-# Register the command
-register("sudo", sudo_command)
+def sudo(update: Update, context: CallbackContext):
+    """Handler for /sudo command"""
+    # Check if user is a superuser
+    from bot.bot import is_superuser
+    if not is_superuser(update.effective_user.id):
+        update.message.reply_text("🚫 Anda tidak memiliki izin superuser untuk menjalankan perintah sudo.")
+        return
+    
+    if not context.args:
+        update.message.reply_text('❌ Perintah sudo memerlukan argumen.\nContoh: /sudo apt update')
+        return
+    
+    command = ' '.join(context.args)
+    try:
+        update.message.reply_text(f"🔄 Menjalankan: sudo {command}")
+        
+        # Log the sudo command
+        log_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'sudo_commands.log')
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        with open(log_file, 'a') as f:
+            f.write(f"[{timestamp}] {update.effective_user.id}: sudo {command}\n")
+            
+        process = subprocess.Popen(
+            f"sudo {command}",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=True,
+            universal_newlines=True
+        )
+        stdout, stderr = process.communicate(timeout=300)
+        
+        output = stdout if stdout else stderr
+        if not output:
+            output = "✅ Perintah sudo dijalankan tanpa output."
+            
+        # Split long messages
+        max_length = 4096
+        if len(output) <= max_length:
+            update.message.reply_text(f"```\n{output}\n```", parse_mode='Markdown')
+        else:
+            chunks = [output[i:i+max_length] for i in range(0, len(output), max_length)]
+            for i, chunk in enumerate(chunks):
+                update.message.reply_text(f"```\n{chunk}\n```", parse_mode='Markdown')
+    except subprocess.TimeoutExpired:
+        update.message.reply_text("❌ Perintah sudo kehabisan waktu (300 detik)")
+    except Exception as e:
+        update.message.reply_text(f"❌ Error: {str(e)}")

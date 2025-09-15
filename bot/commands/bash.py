@@ -1,23 +1,15 @@
-import subprocess
 from telegram import Update
 from telegram.ext import CallbackContext
-from bot.command_handler import register
+import subprocess
+import os
 
-def bash_command(update: Update, context: CallbackContext):
-    """Handle /bash command"""
-    # Get the command after /bash
-    message_text = update.message.text
-    command_parts = message_text.split(maxsplit=1)
-    
-    if len(command_parts) < 2:
-        update.message.reply_text("❌ Format: /bash <perintah>\nContoh: /bash ls -la")
+def bash(update: Update, context: CallbackContext):
+    """Handler for /bash command"""
+    if not context.args:
+        update.message.reply_text('❌ Perintah bash memerlukan argumen.\nContoh: /bash ls -la')
         return
     
-    command = command_parts[1].strip()
-    
-    if not command:
-        update.message.reply_text("❌ Perintah kosong. Format: /bash <perintah>")
-        return
+    command = ' '.join(context.args)
     
     # Check for interactive or privileged commands that should be rejected
     interactive_commands = ['sudo', 'su', 'passwd', 'visudo', 'apt', 'apt-get', 'nano', 'vim', 'vi']
@@ -27,31 +19,33 @@ def bash_command(update: Update, context: CallbackContext):
             return
     
     try:
-        # Run the command with timeout
-        result = subprocess.run(
-            command, 
-            shell=True, 
-            capture_output=True, 
-            text=True, 
-            timeout=30
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=True,
+            universal_newlines=True
         )
+        stdout, stderr = process.communicate(timeout=60)
         
-        output = result.stdout + result.stderr
-        
+        output = stdout if stdout else stderr
         if not output:
-            output = "✅ Perintah selesai tanpa output."
-        
-        # Limit output length
-        if len(output) > 4000:
-            output = output[:4000] + "\n\n📝 [Output terlalu panjang, dipotong...]"
+            output = "✅ Perintah dijalankan tanpa output."
             
+        # Log the command
+        log_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'bot_commands.log')
+        with open(log_file, 'a') as f:
+            f.write(f"[BASH] {update.effective_user.id}: {command}\n")
+            
+        # Split long messages
+        max_length = 4096
+        if len(output) <= max_length:
+            update.message.reply_text(f"```\n{output}\n```", parse_mode='Markdown')
+        else:
+            chunks = [output[i:i+max_length] for i in range(0, len(output), max_length)]
+            for i, chunk in enumerate(chunks):
+                update.message.reply_text(f"```\n{chunk}\n```", parse_mode='Markdown')
     except subprocess.TimeoutExpired:
-        output = "⏰ Timeout: Perintah memakan waktu lebih dari 30 detik."
+        update.message.reply_text("❌ Perintah kehabisan waktu (60 detik)")
     except Exception as e:
-        output = f"❌ Error saat menjalankan perintah:\n{str(e)}"
-
-    # Send plain text to avoid Markdown entity parsing errors
-    update.message.reply_text(f"📥 Output:\n{output}")
-
-# Register the command
-register("bash", bash_command)
+        update.message.reply_text(f"❌ Error: {str(e)}")

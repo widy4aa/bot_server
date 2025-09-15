@@ -7,6 +7,7 @@ from telegram import Update
 from telegram.ext import CallbackContext
 from bot.command_handler import register
 from bot.config import DOWNLOAD_DIR
+import requests
 
 # Ensure download directory exists
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
@@ -153,6 +154,52 @@ def download_command(update: Update, context: CallbackContext):
     # Start monitor thread
     t = threading.Thread(target=_monitor_by_files, args=(proc, start_time, url, chat_id, context.bot), daemon=True)
     t.start()
+
+def download(update: Update, context: CallbackContext):
+    """Handler for /download command"""
+    if not context.args:
+        update.message.reply_text('❌ Perintah download memerlukan URL sebagai argumen.\nContoh: /download https://example.com/file.zip')
+        return
+    
+    url = context.args[0]
+    try:
+        # Extract filename from URL
+        filename = os.path.basename(url.split('?')[0])
+        if not filename:
+            filename = 'downloaded_file'
+            
+        # Create downloads directory if it doesn't exist
+        os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+        
+        # Download file
+        update.message.reply_text(f"🔄 Mengunduh {url}...")
+        
+        response = requests.get(url, stream=True, timeout=60)
+        response.raise_for_status()
+        
+        # Get content length if available
+        total_size = int(response.headers.get('content-length', 0))
+        
+        # Save file
+        file_path = os.path.join(DOWNLOAD_DIR, filename)
+        with open(file_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+        
+        # Report success
+        if total_size > 0:
+            size_mb = total_size / (1024 * 1024)
+            update.message.reply_text(f"✅ File berhasil diunduh: {filename} ({size_mb:.2f} MB)")
+        else:
+            # Get file size from saved file
+            size_mb = os.path.getsize(file_path) / (1024 * 1024)
+            update.message.reply_text(f"✅ File berhasil diunduh: {filename} ({size_mb:.2f} MB)")
+            
+    except requests.exceptions.RequestException as e:
+        update.message.reply_text(f"❌ Gagal mengunduh file: {str(e)}")
+    except Exception as e:
+        update.message.reply_text(f"❌ Error: {str(e)}")
 
 # Register command
 register("download", download_command)

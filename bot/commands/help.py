@@ -1,6 +1,5 @@
 from telegram import Update
 from telegram.ext import CallbackContext
-from bot.command_handler import register
 
 def help_command(update: Update, context: CallbackContext):
     """Handle /help command"""
@@ -58,6 +57,3 @@ def help_command(update: Update, context: CallbackContext):
     except Exception:
         # If fails, try to send a simpler message
         update.message.reply_text("Ketik /help untuk melihat daftar perintah")
-
-# Register the command
-register("help", help_command)

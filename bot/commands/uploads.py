@@ -53,5 +53,52 @@ def uploads_command(update: Update, context: CallbackContext):
         except Exception:
             pass
 
+def uploads(update: Update, context: CallbackContext):
+    """Handler for /uploads command"""
+    # Check if a file is attached
+    if not update.message.document and not update.message.photo:
+        update.message.reply_text('❌ Silakan lampirkan file bersama dengan perintah /uploads.')
+        return
+    
+    try:
+        # Create download directory if it doesn't exist
+        from bot.config import DOWNLOAD_DIR
+        os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+        
+        # Handle document uploads
+        if update.message.document:
+            file = update.message.document
+            file_name = file.file_name
+            
+            # Download the file
+            file_path = os.path.join(DOWNLOAD_DIR, file_name)
+            file_obj = context.bot.get_file(file.file_id)
+            file_obj.download(file_path)
+            
+            # Success message with file info
+            file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
+            update.message.reply_text(f"✅ File berhasil diunggah: {file_name} ({file_size_mb:.2f} MB)")
+        
+        # Handle photo uploads
+        elif update.message.photo:
+            # Get the largest photo size
+            photo = update.message.photo[-1]
+            
+            # Generate a filename based on date and time
+            import time
+            file_name = f"photo_{time.strftime('%Y%m%d_%H%M%S')}.jpg"
+            
+            # Download the photo
+            file_path = os.path.join(DOWNLOAD_DIR, file_name)
+            file_obj = context.bot.get_file(photo.file_id)
+            file_obj.download(file_path)
+            
+            # Success message with file info
+            file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
+            update.message.reply_text(f"✅ Foto berhasil diunggah: {file_name} ({file_size_mb:.2f} MB)")
+    
+    except Exception as e:
+        update.message.reply_text(f"❌ Error saat mengunggah file: {str(e)}")
+
 # Register the command
 register("uploads", uploads_command)
