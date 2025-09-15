@@ -28,6 +28,8 @@ Panduan ringkas ini menjelaskan perintah utama, cara pakai AI, dan beberapa cata
   - Tanyakan ke AI (karakter onee-san). Perlu API key terlebih dahulu.
 - **/git_info**
   - Tampilkan informasi repository git: branch, stash, modified files, dan latest commit
+- **/kirim**
+  - Balas pesan yang berisi file (document/photo/audio/video) lalu ketik /kirim untuk menyimpan file ke folder Downloads
 
 ## Catatan Format Output
 
