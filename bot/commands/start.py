@@ -8,14 +8,54 @@ def start(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     user_name = update.effective_user.first_name or "User"
     
+    # Get latest commit info for versioning
+    import subprocess
+    import os
+    
+    try:
+        # Get current directory
+        repo_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        
+        # Get latest commit info
+        commit_hash = subprocess.check_output(
+            ['git', 'rev-parse', '--short', 'HEAD'], 
+            cwd=repo_dir, 
+            text=True
+        ).strip()
+        
+        commit_date = subprocess.check_output(
+            ['git', 'log', '-1', '--format=%cd', '--date=short'], 
+            cwd=repo_dir, 
+            text=True
+        ).strip()
+        
+        commit_msg = subprocess.check_output(
+            ['git', 'log', '-1', '--format=%s'], 
+            cwd=repo_dir, 
+            text=True
+        ).strip()
+        
+        # Get branch info
+        branch = subprocess.check_output(
+            ['git', 'rev-parse', '--abbrev-ref', 'HEAD'], 
+            cwd=repo_dir, 
+            text=True
+        ).strip()
+        
+        version_info = f"<b>🤖 Bot Server</b> <code>v{commit_date}</code>\n" \
+                      f"<i>Branch</i>: <code>{branch}</code>\n" \
+                      f"<i>Commit</i>: <code>{commit_hash}</code> - {commit_msg}"
+    except Exception as e:
+        version_info = "<i>Tidak bisa mendapatkan info versi git</i>"
+    
     # Check if configuration is complete
     from bot.config import Config
     missing_config = Config.validate_config()
     
     if missing_config:
-        base = f"Selamat datang {user_name}. Sepertinya konfigurasi bot belum lengkap: {', '.join(missing_config)}. Lihat README untuk petunjuk."
+        base = f"<b>Selamat datang {user_name}</b>. Sepertinya konfigurasi bot belum lengkap: {', '.join(missing_config)}. Lihat README untuk petunjuk.\n\n{version_info}"
     else:
-        base = f"Halo {user_name}, bot siap digunakan. Ketik /help untuk melihat dokumentasi lengkap."
+        base = f"<b>Halo {user_name}</b>, bot siap digunakan. Ketik /help untuk melihat dokumentasi lengkap.\n\n{version_info}"
     
     rendered = ai_render(base)
     
@@ -49,6 +89,29 @@ def handle_start_callback(update: Update, context: CallbackContext):
         show_system_status(update, context)
     elif query.data == 'admin':
         show_admin_panel(update, context)
+    elif query.data == 'git_info':
+        from bot.commands.git_info import git_info
+        git_info(update, context)
+    elif query.data == 'restart':
+        # Handle restart (only for superuser)
+        user_id = update.effective_user.id
+        from bot.config import Config
+        if user_id in Config.SUPERUSER_IDS:
+            query.edit_message_text("<b>🔄 Restarting bot...</b>", parse_mode="HTML")
+            from bot.commands.update import update
+            update(update, context)
+        else:
+            query.edit_message_text("🚫 Only superuser can restart the bot.")
+    elif query.data == 'shutdown_confirm':
+        # Handle shutdown confirmation (only for superuser)
+        user_id = update.effective_user.id
+        from bot.config import Config
+        if user_id in Config.SUPERUSER_IDS:
+            query.edit_message_text("<b>⚠️ Shutting down bot...</b>", parse_mode="HTML")
+            from bot.commands.shutdown import shutdown
+            shutdown(update, context)
+        else:
+            query.edit_message_text("🚫 Only superuser can shutdown the bot.")
 
 
 def show_system_status(update: Update, context: CallbackContext):
@@ -99,17 +162,18 @@ def show_admin_panel(update: Update, context: CallbackContext):
         except Exception:
             update.message.reply_text("🚫 Access denied. Superuser only.")
         return
-    admin_message = "Available admin commands:\n- /sudo\n- /update\n- /shutdown"
+    admin_message = "<b>🛠️ Admin Commands:</b>\n• /sudo - Run privileged commands\n• /update - Update bot from GitHub\n• /shutdown - Gracefully shut down the bot\n• /git_info - Show repository status"
     keyboard = [
         [InlineKeyboardButton("📊 System Status", callback_data='status')],
+        [InlineKeyboardButton("🔄 Git Info", callback_data='git_info')],
         [InlineKeyboardButton("🔄 Restart Bot", callback_data='restart')],
         [InlineKeyboardButton("🔴 Shutdown", callback_data='shutdown_confirm')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     try:
-        update.callback_query.message.reply_text(admin_message, reply_markup=reply_markup)
+        update.callback_query.message.reply_text(admin_message, reply_markup=reply_markup, parse_mode="HTML")
     except Exception:
         try:
-            update.message.reply_text(admin_message, reply_markup=reply_markup)
+            update.message.reply_text(admin_message, reply_markup=reply_markup, parse_mode="HTML")
         except Exception:
             update.message.reply_text(admin_message)

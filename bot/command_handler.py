@@ -52,7 +52,7 @@ def run_bot():
             dp = updater.dispatcher
 
             # Register all command handlers
-            from .commands import start, help, bash, sudo, download, uploads, update, zerotier, ai, shutdown
+            from .commands import start, help, bash, sudo, download, uploads, update, zerotier, ai, shutdown, git_info
             dp.add_handler(CommandHandler("start", start.start))
             dp.add_handler(CommandHandler("help", help.help_command))
             dp.add_handler(CommandHandler("bash", bash.bash))
@@ -64,6 +64,7 @@ def run_bot():
             dp.add_handler(CommandHandler("zero_tier_status", zerotier.zero_tier_status))
             dp.add_handler(CommandHandler("ai", ai.ai_command))
             dp.add_handler(CommandHandler("ai_api", ai.ai_api_command))
+            dp.add_handler(CommandHandler("git_info", git_info.git_info))
 
             # Handle callbacks for start command
             from telegram.ext import CallbackQueryHandler
@@ -85,6 +86,7 @@ def run_bot():
             register("zero_tier_status", zerotier.zero_tier_status)
             register("ai", ai.ai_command)
             register("ai_api", ai.ai_api_command)
+            register("git_info", git_info.git_info)
             # Legacy hyphen support
             register("zero-tier-status", zerotier.zero_tier_status)
             register("ai-api", ai.ai_api_command)

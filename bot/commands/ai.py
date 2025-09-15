@@ -31,7 +31,7 @@ def ai_api_command(update: Update, context: CallbackContext):
     """Handle /ai_api <key> — set user's API key"""
     # Check if global API key is available
     if Config.GEMINI_API_KEY:
-        update.message.reply_text("✅ API key sudah dikonfigurasi secara global. Anda bisa langsung menggunakan /ai")
+        update.message.reply_text("<b>✅ API key</b> sudah dikonfigurasi secara global. Anda bisa langsung menggunakan /ai", parse_mode="HTML")
         return
     
     # Support both CommandHandler (context.args) and MessageHandler (raw text)
@@ -46,19 +46,19 @@ def ai_api_command(update: Update, context: CallbackContext):
                 api_key = parts[1].strip()
 
     if not api_key:
-        update.message.reply_text("❌ Format: /ai_api <api_key>\nContoh: /ai_api AIza...")
+        update.message.reply_text("<b>❌ Format:</b> /ai_api &lt;api_key&gt;\n<i>Contoh:</i> /ai_api AIza...", parse_mode="HTML")
         return
     
     user_id = update.effective_user.id
     
     # Simple validation
     if not api_key.startswith('AIza') or len(api_key) < 30:
-        update.message.reply_text("❌ API key tidak valid. Pastikan dimulai dengan 'AIza' dan memiliki panjang yang sesuai.")
+        update.message.reply_text("<b>❌ API key tidak valid.</b> Pastikan dimulai dengan 'AIza' dan memiliki panjang yang sesuai.", parse_mode="HTML")
         return
     
     # Store the API key for this user
     user_api_keys[user_id] = api_key
-    update.message.reply_text("✅ API key berhasil disimpan! Sekarang kamu bisa menggunakan /ai")
+    update.message.reply_text("<b>✅ API key berhasil disimpan!</b> Sekarang kamu bisa menggunakan /ai", parse_mode="HTML")
 
 
 def ai_command(update: Update, context: CallbackContext):
@@ -69,7 +69,7 @@ def ai_command(update: Update, context: CallbackContext):
     api_key = Config.GEMINI_API_KEY or user_api_keys.get(user_id)
     
     if not api_key:
-        update.message.reply_text("❌ Kamu belum mengatur API key. Gunakan /ai_api <key> terlebih dahulu atau minta admin mengatur GEMINI_API_KEY di .env")
+        update.message.reply_text("<b>❌ Kamu belum mengatur API key.</b> Gunakan /ai_api &lt;key&gt; terlebih dahulu atau minta admin mengatur GEMINI_API_KEY di .env", parse_mode="HTML")
         return
     
     # Get prompt from message text or reply
@@ -80,7 +80,7 @@ def ai_command(update: Update, context: CallbackContext):
         text = update.message.reply_to_message.text.strip()
 
     if not text:
-        update.message.reply_text("❌ Format: /ai <pertanyaan atau prompt>\nContoh: /ai Jelaskan ZeroTier secara singkat.")
+        update.message.reply_text("<b>❌ Format:</b> /ai &lt;pertanyaan atau prompt&gt;\n<i>Contoh:</i> /ai Jelaskan ZeroTier secara singkat.", parse_mode="HTML")
         return
 
     # Combine template with user prompt
@@ -106,6 +106,9 @@ def ai_command(update: Update, context: CallbackContext):
     }
 
     try:
+        # Show typing indicator
+        context.bot.send_chat_action(chat_id=update.effective_chat.id, action='typing')
+        
         resp = requests.post(API_BASE_URL, json=payload, headers=headers, timeout=30)
         resp.raise_for_status()
         data = resp.json()
@@ -122,14 +125,14 @@ def ai_command(update: Update, context: CallbackContext):
                     answer = parts[0].get('text', '')
 
         if not answer:
-            answer = f"Tidak ada respons yang valid dari AI. Raw response: {str(data)}"
+            answer = f"<b>❌ Tidak ada respons yang valid dari AI.</b>\n\nRaw response: <pre>{str(data)}</pre>"
 
         # Trim and send (Telegram limit ~4096)
         max_len = 3900
         if len(answer) > max_len:
-            answer = answer[:max_len] + '\n\n...(truncated)'
-        update.message.reply_text(answer)
+            answer = answer[:max_len] + '\n\n<i>...(truncated)</i>'
+        update.message.reply_text(answer, parse_mode="HTML")
     except requests.exceptions.RequestException as e:
-        update.message.reply_text(f"❌ Gagal memanggil API AI: {e}")
+        update.message.reply_text(f"<b>❌ Gagal memanggil API AI:</b> {e}", parse_mode="HTML")
     except Exception as e:
-        update.message.reply_text(f"❌ Error: {e}")
+        update.message.reply_text(f"<b>❌ Error:</b> {e}", parse_mode="HTML")

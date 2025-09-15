@@ -26,6 +26,8 @@ Panduan ringkas ini menjelaskan perintah utama, cara pakai AI, dan beberapa cata
   - Simpan API key Google Gemini untuk pengguna (opsional jika GEMINI_API_KEY global diset)
 - **/ai** <prompt>
   - Tanyakan ke AI (karakter onee-san). Perlu API key terlebih dahulu.
+- **/git_info**
+  - Tampilkan informasi repository git: branch, stash, modified files, dan latest commit
 
 ## Catatan Format Output
 

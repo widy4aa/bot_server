@@ -26,6 +26,7 @@ Bot Server — Telegram bot to manage server tasks remotely (run shell commands,
 - **/update** — Tarik perubahan dari GitHub dan restart (owner only)
 - **/shutdown** — Matikan bot secara graceful (owner/superuser only)
 - **/zero_tier_status** — Periksa status ZeroTier
+- **/git_info** — Tampilkan informasi repository git (branch, files, commit)
 - **/ai_api** `<key>` dan **/ai** `<prompt>` — Fitur AI onee-san
 
 ## Prasyarat & Instalasi singkat
