@@ -7,65 +7,72 @@ def help_command(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     is_super = user_id in SUPERUSER_IDS
 
-    help_lines = [
-        "📋 *Daftar Perintah Bot Server*",
-        "",
-        "/start - Memulai bot dan mendapatkan salam sambutan.",
-        "",
-        "/help - Menampilkan pesan bantuan ini.",
-        "",
-        "/bash <perintah> - Menjalankan perintah shell pada server. Contoh:\n`/bash ls -la /home`",
-        "",
-        "/download <url> - Mengunduh file dari URL ke folder Downloads di server. Contoh:\n`/download https://example.com/file.zip`",
-        "",
-        "/uploads - Gunakan bersamaan dengan lampiran file untuk menyimpan file ke server (kirim file + ketik /uploads).",
-        "  Atau: /uploads <path_file> untuk mengirim file dari server ke Telegram. Contoh: `/uploads /home/user/file.zip`",
-        "",
-        "/sudo <perintah> - Menjalankan perintah dengan sudo/doas (hanya untuk superuser). Contoh:\n`/sudo systemctl restart nginx`",
-        "",
-        "/update - Menarik (git pull) update dari repository GitHub dan merestart bot (hanya owner).",
-        "",
-        "/zero-tier-status (alias /zero_tier_status) - Mengecek status ZeroTier (systemd + zerotier-cli).",
-        "  Catatan: beberapa pemeriksaan mungkin membutuhkan hak root; bot akan mencoba menggunakan `doas` atau `sudo` jika tersedia.",
-        "",
-        "/ai <prompt> - Mengirim prompt ke AI (Gemini / Generative Language). Contoh:\n`/ai Jelaskan ZeroTier secara singkat.`",
-        "  Anda juga bisa membalas pesan dan gunakan /ai saat membalas untuk konteks.",
-        "",
-        "🔒 *Catatan tentang izin*:",
-        "• Bot ini hanya dapat digunakan oleh user yang terdaftar di user.csv.",
-        "• Perintah /sudo hanya untuk superuser.",
-        "",
-        "---",
-        "*Cara pakai (contoh langkah-demi-langkah)*",
-        "",
-        "1) Menjalankan perintah shell sederhana:",
-        "   • Ketik: `/bash whoami` — akan menampilkan user yang menjalankan proses pada server.",
-        "",
-        "2) Menjalankan perintah yang membutuhkan hak khusus (jika Anda superuser):",
-        "   • Ketik: `/sudo systemctl status nginx` — bot akan mencoba menjalankan via doas/sudo.",
-        "",
-        "3) Mengunduh file dari internet ke server dan mengambil hasilnya:",
-        "   • Ketik: `/download https://example.com/largefile.zip` — bot akan mulai mendownload ke folder Downloads dan mengirim progress.",
-        "   • Jika file <500MB, bot akan mencoba mengirim file via Telegram setelah selesai; jika lebih besar, file disimpan di server.",
-        "",
-        "4) Mengunggah file ke server (dari Telegram):",
-        "   • Kirim file (lampiran) ke bot, lalu ketik: `/uploads` — file akan disimpan ke folder Downloads di server.",
-        "",
-        "5) Mengambil file yang sudah ada di server dan mengirim ke Telegram:",
-        "   • Ketik: `/uploads /path/to/file` — bot akan mencari file tersebut dan mengirimkannya ke chat (jika ukuran memungkinkan).",
-        "",
-        "6) Memeriksa status ZeroTier:",
-        "   • Ketik: `/zero-tier-status` atau `/zero_tier_status` — bot akan menampilkan status service dan output zerotier-cli (coba konfigurasi doas/sudo jika muncul pesan authtoken.secret).",
-        "",
-        "7) Menggunakan AI untuk menjawab pertanyaan atau menjelaskan topik:",
-        "   • Ketik: `/ai <pertanyaan>` atau balas pesan lalu ketik /ai saat membalas. Contoh: `/ai Jelaskan arsitektur ZeroTier secara ringkas.`",
-        "",
-        "Catatan: Gunakan perintah dengan hati-hati. Perintah yang interaktif tidak didukung via bot (mis. apt upgrade yang memerlukan input).",
-    ]
+    # Send help in multiple parts to avoid Telegram parsing errors
+    
+    # Part 1: Command list
+    help_part1 = """📋 DAFTAR PERINTAH BOT SERVER
+
+/start - Memulai bot dan salam sambutan
+/help - Menampilkan bantuan ini
+/bash <perintah> - Menjalankan perintah shell
+/download <url> - Mengunduh file dari URL
+/uploads - Simpan file ke server ATAU kirim file dari server
+/sudo <perintah> - Perintah dengan hak khusus (superuser only)
+/update - Update bot dari GitHub (owner only)
+/zero_tier_status - Status ZeroTier service
+/ai_api <key> - Set API key untuk AI (wajib sebelum pakai /ai)
+/ai <prompt> - Tanya AI onee-san (perlu API key dulu)
+
+🔒 AKSES:
+• Hanya user terdaftar di user.csv
+• /sudo hanya untuk superuser"""
 
     if is_super:
-        help_lines.append("")
-        help_lines.append("✅ Anda terdeteksi sebagai superuser — Anda bisa menggunakan /sudo dan perintah lainnya.")
+        help_part1 += "\n\n✅ Anda adalah superuser"
 
-    help_text = "\n".join(help_lines)
-    update.message.reply_text(help_text, parse_mode='Markdown')
+    # Part 2: Usage examples
+    help_part2 = """📖 CARA PAKAI:
+
+1) Shell command:
+   /bash whoami
+
+2) Privileged command (superuser):
+   /sudo systemctl status nginx
+
+3) Download file:
+   /download https://example.com/file.zip
+   (Bot download ke server, kirim via Telegram jika <500MB)
+
+4) Upload ke server:
+   Kirim file + ketik /uploads
+
+5) Ambil file dari server:
+   /uploads /path/to/file"""
+
+    # Part 3: More examples
+    help_part3 = """📖 CARA PAKAI (lanjutan):
+
+6) ZeroTier status:
+   /zero_tier_status
+   (Bot coba pakai doas/sudo untuk zerotier-cli)
+
+7) Setup AI onee-san:
+   /ai_api AIzaSy... (set API key dulu)
+   /ai Halo kak, bagaimana cara kerja ZeroTier?
+   (AI akan jawab dengan karakter onee-san yang supportif)
+
+⚠️ CATATAN:
+• Perintah interaktif tidak didukung
+• Gunakan dengan hati-hati
+• Bot auto-split output panjang
+• API key AI disimpan per user (reset saat restart bot)"""
+
+    # Send all parts
+    try:
+        update.message.reply_text(help_part1)
+        update.message.reply_text(help_part2)
+        update.message.reply_text(help_part3)
+    except Exception as e:
+        # Fallback without any formatting
+        fallback_text = "Bot Server Help - Commands: /start /help /bash /download /uploads /sudo /update /zero-tier-status /ai - See README for details"
+        update.message.reply_text(fallback_text)

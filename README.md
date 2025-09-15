@@ -17,7 +17,9 @@ Bot ini memungkinkan admin yang terdaftar untuk menjalankan perintah shell, meng
 - /download <url> — Mengunduh file dari URL ke folder `Downloads`.
 - /uploads — Simpan file yang dikirim ke bot ke folder `Downloads`.
 - /update — Menarik update dari GitHub (git pull) dan me-restart bot (hanya owner di user.csv).
-- /zero-tier-status (alias /zero_tier_status) — Mengecek status systemd `zerotier-one` dan menjalankan `zerotier-cli` jika tersedia.
+- /zero_tier_status — Mengecek status systemd `zerotier-one` dan menjalankan `zerotier-cli` jika tersedia.
+- /ai_api <key> — Set API key untuk AI (Google Gemini).
+- /ai <prompt> — Bertanya ke AI dengan karakter onee-san yang supportif.
 
 ## Prasyarat
 
@@ -70,7 +72,9 @@ Bot akan mulai polling dan siap menerima perintah dari user yang terdaftar.
 - /download https://example.com/file.zip
 - Kirim file ke bot lalu ketik /uploads
 - /sudo apt update
-- /zero-tier-status
+- /zero_tier_status
+- /ai_api AIzaSy... (set API key)
+- /ai Halo kak!
 
 Catatan: beberapa perintah akan mengembalikan output panjang — bot otomatis memecah pesan bila terlalu besar.
 
@@ -88,9 +92,103 @@ Catatan: beberapa perintah akan mengembalikan output panjang — bot otomatis me
 
 ## Troubleshooting
 
-- ``ValueError: Command is not a valid bot command`` — Perintah bot tidak boleh mengandung karakter yang tidak diizinkan (mis. `-`). Bot menangani alias pengguna (mis. `/zero-tier-status`) via regex dan internal command name.
+- ``ValueError: Command is not a valid bot command`` — Perintah bot tidak boleh mengandung karakter yang tidak diizinkan (mis. `-`). Bot menangani alias pengguna (mis. `/zero-tier-status`) via regex dan internal command name menggunakan underscore.
 - Periksa log di console untuk error yang dilaporkan oleh `bot.bot` logger.
 - Jika bot tidak merespon, pastikan token benar, file `user.csv` berisi ID Anda, dan proses Python berjalan.
+
+## Development & Contributing
+
+### Struktur Project
+
+```
+bot_server/
+├── bot/
+│   ├── commands/          # Command handlers
+│   │   ├── __init__.py
+│   │   ├── ai.py         # AI commands (/ai, /ai_api)
+│   │   ├── bash.py       # Shell commands
+│   │   ├── download.py   # Download handler
+│   │   ├── help.py       # Help command
+│   │   ├── start.py      # Start command
+│   │   ├── sudo.py       # Sudo commands
+│   │   ├── update.py     # Auto-update
+│   │   ├── uploads.py    # File upload/download
+│   │   └── zerotier.py   # ZeroTier status
+│   ├── __init__.py
+│   ├── bot.py           # Main bot logic
+│   ├── command_handler.py # Command routing
+│   └── config.py        # Configuration
+├── Downloads/           # Default download directory
+├── main.py             # Entry point
+├── user.csv            # Authorized user IDs
+├── requirements.txt    # Python dependencies
+└── README.md
+```
+
+### Menambah Command Baru
+
+1. **Buat file command baru** di `bot/commands/`:
+```python
+# bot/commands/mycommand.py
+from telegram import Update
+from telegram.ext import CallbackContext
+
+def my_command(update: Update, context: CallbackContext):
+    """Handler for /my_command"""
+    update.message.reply_text("Hello from my command!")
+```
+
+2. **Import di command_handler.py**:
+```python
+# Tambahkan import
+from .commands import mycommand
+
+# Tambahkan handler
+dp.add_handler(CommandHandler("my_command", mycommand.my_command))
+register("my_command", mycommand.my_command)
+```
+
+3. **Update help.py** untuk dokumentasi command.
+
+### Naming Convention
+
+- **Command names**: Gunakan underscore (`_`) untuk nama internal command
+- **Legacy support**: Hyphen (`-`) didukung via regex MessageHandler untuk backward compatibility
+- **File names**: Gunakan lowercase dengan underscore
+- **Function names**: Gunakan snake_case
+
+### Testing
+
+```bash
+# Test manual
+python main.py
+
+# Check syntax
+python -m py_compile bot/commands/mycommand.py
+```
+
+### Contributing Guidelines
+
+1. Fork repository
+2. Buat branch untuk fitur baru: `git checkout -b feature/my-feature`
+3. Commit changes: `git commit -am 'Add my feature'`
+4. Push ke branch: `git push origin feature/my-feature`
+5. Buat Pull Request
+
+### Security Considerations
+
+- Selalu validasi input user
+- Gunakan whitelist untuk command yang sensitif
+- Log semua command execution
+- Batasi akses file system
+- Hindari command injection vulnerabilities
+
+### Performance Tips
+
+- Gunakan threading untuk operasi yang lama (download, command execution)
+- Implementasi timeout untuk external calls
+- Split output panjang untuk menghindari Telegram API limits
+- Cache data yang sering diakses
 
 ---
 

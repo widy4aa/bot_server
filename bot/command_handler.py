@@ -46,8 +46,10 @@ def run_bot():
     dp.add_handler(CommandHandler("update", update.update))
     dp.add_handler(CommandHandler("zero_tier_status", zerotier.zero_tier_status))
     dp.add_handler(CommandHandler("ai", ai.ai_command))
-    # Also accept the user-friendly hyphen form via regex
-    dp.add_handler(MessageHandler(Filters.regex(r'^/zero-tier-status(\\s|$)'), zerotier.zero_tier_status))
+    dp.add_handler(CommandHandler("ai_api", ai.ai_api_command))
+    # Also accept the user-friendly hyphen form via regex for legacy support
+    dp.add_handler(MessageHandler(Filters.regex(r'^/zero-tier-status(\s|$)'), zerotier.zero_tier_status))
+    dp.add_handler(MessageHandler(Filters.regex(r'^/ai-api(\s|$)'), ai.ai_api_command))
     
     # Register the command handlers in the commands dictionary too (for handle function)
     register("start", start.start)
@@ -58,8 +60,11 @@ def run_bot():
     register("uploads", uploads.uploads)
     register("update", update.update)
     register("zero_tier_status", zerotier.zero_tier_status)
-    register("zero-tier-status", zerotier.zero_tier_status)
     register("ai", ai.ai_command)
+    register("ai_api", ai.ai_api_command)
+    # Legacy hyphen support
+    register("zero-tier-status", zerotier.zero_tier_status)
+    register("ai-api", ai.ai_api_command)
     
     # Add message handler for non-command text processing
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle))
