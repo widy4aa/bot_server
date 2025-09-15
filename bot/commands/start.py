@@ -13,50 +13,24 @@ def start(update: Update, context: CallbackContext):
     import os
     
     try:
-        # Get current directory
         repo_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        
-        # Get latest commit info
-        commit_hash = subprocess.check_output(
-            ['git', 'rev-parse', '--short', 'HEAD'], 
-            cwd=repo_dir, 
-            text=True
-        ).strip()
-        
-        commit_date = subprocess.check_output(
-            ['git', 'log', '-1', '--format=%cd', '--date=short'], 
-            cwd=repo_dir, 
-            text=True
-        ).strip()
-        
-        commit_msg = subprocess.check_output(
-            ['git', 'log', '-1', '--format=%s'], 
-            cwd=repo_dir, 
-            text=True
-        ).strip()
-        
-        # Get branch info
-        branch = subprocess.check_output(
-            ['git', 'rev-parse', '--abbrev-ref', 'HEAD'], 
-            cwd=repo_dir, 
-            text=True
-        ).strip()
-        
-        version_info = f"<b>🤖 Bot Server</b> <code>v{commit_date}</code>\n" \
-                      f"<i>Branch</i>: <code>{branch}</code>\n" \
-                      f"<i>Commit</i>: <code>{commit_hash}</code> - {commit_msg}"
-    except Exception as e:
-        version_info = "<i>Tidak bisa mendapatkan info versi git</i>"
-    
-    # Check if configuration is complete
+        commit_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'], cwd=repo_dir, text=True).strip()
+        commit_date = subprocess.check_output(['git', 'log', '-1', '--format=%cd', '--date=short'], cwd=repo_dir, text=True).strip()
+        commit_msg = subprocess.check_output(['git', 'log', '-1', '--format=%s'], cwd=repo_dir, text=True).strip()
+        branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=repo_dir, text=True).strip()
+
+        version_info = f"**🤖 Bot Server** `v{commit_date}`\nBranch: `{branch}`\nCommit: `{commit_hash}` - {commit_msg}"
+    except Exception:
+        version_info = "_Tidak bisa mendapatkan info versi git_"
+
     from bot.config import Config
     missing_config = Config.validate_config()
-    
+
     if missing_config:
-        base = f"<b>Selamat datang {user_name}</b>. Sepertinya konfigurasi bot belum lengkap: {', '.join(missing_config)}. Lihat README untuk petunjuk.\n\n{version_info}"
+        base = f"**Selamat datang {user_name}**. Sepertinya konfigurasi bot belum lengkap: {', '.join(missing_config)}. Lihat README untuk petunjuk.\n\n{version_info}"
     else:
-        base = f"<b>Halo {user_name}</b>, bot siap digunakan. Ketik /help untuk melihat dokumentasi lengkap.\n\n{version_info}"
-    
+        base = f"**Halo {user_name}**, bot siap digunakan. Ketik /help untuk melihat dokumentasi lengkap.\n\n{version_info}"
+
     rendered = ai_render(base)
     
     # Create inline keyboard for quick actions

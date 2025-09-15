@@ -47,34 +47,34 @@ def git_info(update: Update, context: CallbackContext):
         
         # Format result
         result = [
-            f"<b>🌟 Git Info</b>",
-            f"<b>Branch:</b> <code>{branch}</code>",
-            f"<b>Stash:</b> {stash_count} stashed changes",
+            "**🌟 Git Info**",
+            f"**Branch:** `{branch}`",
+            f"**Stash:** {stash_count} stashed changes",
             ""
         ]
         
         if modified_files:
-            result.append("<b>🔧 Modified files:</b>")
+            result.append("**🔧 Modified files:**")
             for f in modified_files[:10]:  # Limit to 10 files
-                result.append(f"  • <code>{f[2:].strip()}</code>")
+                result.append(f"  - `{f[2:].strip()}`")
             if len(modified_files) > 10:
-                result.append(f"  <i>...and {len(modified_files)-10} more files</i>")
+                result.append(f"  _...and {len(modified_files)-10} more files_")
             result.append("")
         
         if staged_files:
-            result.append("<b>✅ Staged files:</b>")
+            result.append("**✅ Staged files:**")
             for f in staged_files[:10]:
-                result.append(f"  • <code>{f[2:].strip()}</code>")
+                result.append(f"  - `{f[2:].strip()}`")
             if len(staged_files) > 10:
-                result.append(f"  <i>...and {len(staged_files)-10} more files</i>")
+                result.append(f"  _...and {len(staged_files)-10} more files_")
             result.append("")
         
         if untracked_files:
-            result.append("<b>❓ Untracked files:</b>")
+            result.append("**❓ Untracked files:**")
             for f in untracked_files[:10]:
-                result.append(f"  • <code>{f[2:].strip()}</code>")
+                result.append(f"  - `{f[2:].strip()}`")
             if len(untracked_files) > 10:
-                result.append(f"  <i>...and {len(untracked_files)-10} more files</i>")
+                result.append(f"  _...and {len(untracked_files)-10} more files_")
             result.append("")
         
         # Get latest commit info
@@ -84,14 +84,14 @@ def git_info(update: Update, context: CallbackContext):
             text=True
         ).strip()
         
-        result.append("<b>🔄 Latest commit:</b>")
-        result.append(f"<pre>{commit_info}</pre>")
+        result.append("**🔄 Latest commit:**")
+        result.append(f"```\n{commit_info}\n```")
         
         message = '\n'.join(result)
-        update.message.reply_text(message, parse_mode="HTML")
+        ai_send_message(update, message)
         
     except Exception as e:
-        update.message.reply_text(f"<b>❌ Error:</b> {str(e)}", parse_mode="HTML")
+        ai_send_message(update, f"**❌ Error:** {str(e)}")
 
 def register_git_info(dp):
     """Register the git_info command with the dispatcher"""

@@ -3,6 +3,7 @@ import requests
 from telegram import Update
 from telegram.ext import CallbackContext
 from bot.config import Config
+from bot.ai_wrapper import ai_render, ai_send_message
 
 # Store API keys per user (in memory - resets on bot restart)
 user_api_keys = {}
@@ -31,7 +32,7 @@ def ai_api_command(update: Update, context: CallbackContext):
     """Handle /ai_api <key> — set user's API key"""
     # Check if global API key is available
     if Config.GEMINI_API_KEY:
-        update.message.reply_text("<b>✅ API key</b> sudah dikonfigurasi secara global. Anda bisa langsung menggunakan /ai", parse_mode="HTML")
+        ai_send_message(update, "**✅ API key** sudah dikonfigurasi secara global. Anda bisa langsung menggunakan /ai")
         return
     
     # Support both CommandHandler (context.args) and MessageHandler (raw text)
@@ -46,19 +47,19 @@ def ai_api_command(update: Update, context: CallbackContext):
                 api_key = parts[1].strip()
 
     if not api_key:
-        update.message.reply_text("<b>❌ Format:</b> /ai_api &lt;api_key&gt;\n<i>Contoh:</i> /ai_api AIza...", parse_mode="HTML")
+        ai_send_message(update, "**❌ Format:** /ai_api <api_key>\n__Contoh:__ /ai_api AIza...")
         return
     
     user_id = update.effective_user.id
     
     # Simple validation
     if not api_key.startswith('AIza') or len(api_key) < 30:
-        update.message.reply_text("<b>❌ API key tidak valid.</b> Pastikan dimulai dengan 'AIza' dan memiliki panjang yang sesuai.", parse_mode="HTML")
+        ai_send_message(update, "**❌ API key tidak valid.** Pastikan dimulai dengan 'AIza' dan memiliki panjang yang sesuai.")
         return
     
     # Store the API key for this user
     user_api_keys[user_id] = api_key
-    update.message.reply_text("<b>✅ API key berhasil disimpan!</b> Sekarang kamu bisa menggunakan /ai", parse_mode="HTML")
+    ai_send_message(update, "**✅ API key berhasil disimpan!** Sekarang kamu bisa menggunakan /ai")
 
 
 def ai_command(update: Update, context: CallbackContext):
@@ -69,7 +70,7 @@ def ai_command(update: Update, context: CallbackContext):
     api_key = Config.GEMINI_API_KEY or user_api_keys.get(user_id)
     
     if not api_key:
-        update.message.reply_text("<b>❌ Kamu belum mengatur API key.</b> Gunakan /ai_api &lt;key&gt; terlebih dahulu atau minta admin mengatur GEMINI_API_KEY di .env", parse_mode="HTML")
+        ai_send_message(update, "**❌ Kamu belum mengatur API key.** Gunakan /ai_api <key> terlebih dahulu atau minta admin mengatur GEMINI_API_KEY di .env")
         return
     
     # Get prompt from message text or reply
@@ -80,7 +81,7 @@ def ai_command(update: Update, context: CallbackContext):
         text = update.message.reply_to_message.text.strip()
 
     if not text:
-        update.message.reply_text("<b>❌ Format:</b> /ai &lt;pertanyaan atau prompt&gt;\n<i>Contoh:</i> /ai Jelaskan ZeroTier secara singkat.", parse_mode="HTML")
+        ai_send_message(update, "**❌ Format:** /ai <pertanyaan atau prompt>\n__Contoh:__ /ai Jelaskan ZeroTier secara singkat.")
         return
 
     # Combine template with user prompt
@@ -125,14 +126,14 @@ def ai_command(update: Update, context: CallbackContext):
                     answer = parts[0].get('text', '')
 
         if not answer:
-            answer = f"<b>❌ Tidak ada respons yang valid dari AI.</b>\n\nRaw response: <pre>{str(data)}</pre>"
+            answer = f"**❌ Tidak ada respons yang valid dari AI.**\n\nRaw response:\n```\n{str(data)}```"
 
         # Trim and send (Telegram limit ~4096)
         max_len = 3900
         if len(answer) > max_len:
-            answer = answer[:max_len] + '\n\n<i>...(truncated)</i>'
-        update.message.reply_text(answer, parse_mode="HTML")
+            answer = answer[:max_len] + '\n\n__(truncated)__'
+        ai_send_message(update, answer)
     except requests.exceptions.RequestException as e:
-        update.message.reply_text(f"<b>❌ Gagal memanggil API AI:</b> {e}", parse_mode="HTML")
+        ai_send_message(update, f"**❌ Gagal memanggil API AI:** {e}")
     except Exception as e:
-        update.message.reply_text(f"<b>❌ Error:</b> {e}", parse_mode="HTML")
+        ai_send_message(update, f"**❌ Error:** {e}")
