@@ -2,6 +2,8 @@ from typing import Dict, Callable
 from telegram import Update
 from telegram.ext import CallbackContext
 
+from .commands import start, help, bash, sudo, download, uploads, update
+
 # Dictionary to store command handlers
 commands: Dict[str, Callable[[Update, CallbackContext], None]] = {}
 
@@ -24,3 +26,13 @@ def handle(update: Update, context: CallbackContext):
     else:
         # Non-command messages
         update.message.reply_text('❌ Gunakan perintah yang dimulai dengan /\nKetik /help untuk melihat daftar perintah.')
+
+def main():
+    # Register command handlers
+    register("start", start.start)
+    register("help", help.help_command)
+    register("bash", bash.bash)
+    register("sudo", sudo.sudo)
+    register("download", download.download)
+    register("uploads", uploads.uploads)
+    register("update", update.update)
