@@ -30,7 +30,7 @@ def handle(update: Update, context: CallbackContext):
 
 def run_bot():
     # Import command modules here to avoid circular imports
-    from .commands import start, help, bash, sudo, download, uploads, update, zerotier
+    from .commands import start, help, bash, sudo, download, uploads, update, zerotier, ai
     
     from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
     updater = Updater(token=config.BOT_TOKEN, use_context=True)
@@ -44,8 +44,8 @@ def run_bot():
     dp.add_handler(CommandHandler("download", download.download))
     dp.add_handler(CommandHandler("uploads", uploads.uploads))
     dp.add_handler(CommandHandler("update", update.update))
-    # Use underscore name for CommandHandler (hyphens are not allowed in bot command names)
     dp.add_handler(CommandHandler("zero_tier_status", zerotier.zero_tier_status))
+    dp.add_handler(CommandHandler("ai", ai.ai_command))
     # Also accept the user-friendly hyphen form via regex
     dp.add_handler(MessageHandler(Filters.regex(r'^/zero-tier-status(\\s|$)'), zerotier.zero_tier_status))
     
@@ -57,9 +57,9 @@ def run_bot():
     register("download", download.download)
     register("uploads", uploads.uploads)
     register("update", update.update)
-    # register both forms so handle() can find them
     register("zero_tier_status", zerotier.zero_tier_status)
     register("zero-tier-status", zerotier.zero_tier_status)
+    register("ai", ai.ai_command)
     
     # Add message handler for non-command text processing
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle))
