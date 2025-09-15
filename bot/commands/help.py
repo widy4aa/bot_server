@@ -1,59 +1,37 @@
 from telegram import Update
 from telegram.ext import CallbackContext
+from bot.config import SUPERUSER_IDS
 
 def help_command(update: Update, context: CallbackContext):
-    """Handle /help command"""
-    # Check if user is a superuser to show additional commands
-    from bot.bot import is_superuser
+    """Handler for /help command"""
     user_id = update.effective_user.id
-    is_super = is_superuser(user_id)
-    
-    # Base help text for all users
-    help_message = """
-📋 Daftar Perintah yang Tersedia:
+    is_super = user_id in SUPERUSER_IDS
 
-🏠 /start - Pesan selamat datang dan informasi bot
+    help_lines = [
+        "📋 *Daftar Perintah Bot Server*",
+        "",
+        "/start - Memulai bot dan mendapatkan salam sambutan.",
+        "",
+        "/help - Menampilkan pesan bantuan ini.",
+        "",
+        "/bash <perintah> - Menjalankan perintah shell pada server. Contoh:\n`/bash ls -la /home`",
+        "",
+        "/download <url> - Mengunduh file dari URL ke folder Downloads di server. Contoh:\n`/download https://example.com/file.zip`",
+        "",
+        "/uploads - Gunakan bersamaan dengan lampiran file untuk menyimpan file ke server (kirim file + ketik /uploads).",
+        "",
+        "/sudo <perintah> - Menjalankan perintah dengan sudo (hanya untuk superuser). Contoh:\n`/sudo apt update`",
+        "",
+        "/update - Menarik (git pull) update dari repository GitHub dan merestart bot (hanya owner).",
+        "",
+        "🔒 *Catatan tentang izin*:",
+        "• Bot ini hanya dapat digunakan oleh user yang terdaftar di user.csv.",
+        "• Perintah /sudo hanya untuk superuser.",
+    ]
 
-❓ /help - Menampilkan daftar perintah ini
-
-💻 /bash <perintah> - Menjalankan perintah bash non-interaktif di server
-   Contoh: /bash ls -la, /bash pwd, /bash whoami
-
-⏬ Download Commands:
-• /download <URL> - Download file dari URL (progress dikirim berkala, file <500MB akan dikirim otomatis)
-
-⬆️ Upload Commands:
-• /uploads <path_file> - Meng-upload file dari path di server ke Telegram
-"""
-
-    # Add superuser-specific commands
     if is_super:
-        help_message += """
-🔑 Perintah Superuser:
-• /sudo <command> - Menjalankan perintah dengan hak akses doas (superuser only)
-  Contoh: /sudo apt update, /sudo systemctl restart nginx
-"""
+        help_lines.append("")
+        help_lines.append("✅ Anda terdeteksi sebagai superuser — Anda bisa menggunakan /sudo dan perintah lainnya.")
 
-    # Add general features and notes
-    help_message += """
-📁 Download Features:
-• File di bawah 500MB akan dikirim via Telegram
-• File di atas 500MB tersimpan di server
-• Lokasi download: /home/widy4aa/bot_server/Downloads
-• Menggunakan aria2c untuk download multi-thread
-
-⚠️ Catatan Penting:
-• Hanya pengguna terotorisasi yang dapat menggunakan bot ini
-• Perintah bash memiliki timeout 30 detik
-• Perintah interaktif hanya untuk superuser
-• Gunakan dengan hati-hati, perintah dapat mengubah sistem
-
-🔒 Keamanan: Bot ini dilindungi dengan sistem otorisasi berbasis user ID.
-"""
-    
-    # Send without parse_mode to avoid entity errors
-    try:
-        update.message.reply_text(help_message)
-    except Exception:
-        # If fails, try to send a simpler message
-        update.message.reply_text("Ketik /help untuk melihat daftar perintah")
+    help_text = "\n".join(help_lines)
+    update.message.reply_text(help_text, parse_mode='Markdown')
