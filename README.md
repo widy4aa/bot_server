@@ -1,4 +1,4 @@
-[![Linux header](https://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)](https://www.kernel.org/)
+[![Linux header](https://raw.githubusercontent.com/widy4aa/bot_server/refs/heads/main/any/linux_header.png)
 
 # bot_server
 
