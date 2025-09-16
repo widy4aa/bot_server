@@ -29,6 +29,8 @@ Bot Server — Telegram bot to manage server tasks remotely (run shell commands,
 - **/git_info** — Tampilkan informasi repository git (branch, files, commit)
 - **/ai_api** `<key>` dan **/ai** `<prompt>` — Fitur AI onee-san
 - **/kirim** — Simpan file yang dikirim ke bot (balas pesan file lalu /kirim)
+- **/torrent** `<magnet>` — Download torrent via qBittorrent (max 1 aktif, antrian otomatis)
+- **/torrent_status** — Cek progress dan antrian download torrent
 
 ## Prasyarat & Instalasi singkat
 

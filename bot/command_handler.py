@@ -52,7 +52,7 @@ def run_bot():
             dp = updater.dispatcher
 
             # Register all command handlers
-            from .commands import start, help, bash, sudo, download, uploads, update, zerotier, ai, shutdown, git_info, kirim
+            from .commands import start, help, bash, sudo, download, uploads, update, zerotier, ai, shutdown, git_info, kirim, torrent
             dp.add_handler(CommandHandler("start", start.start))
             dp.add_handler(CommandHandler("help", help.help_command))
             dp.add_handler(CommandHandler("bash", bash.bash))
@@ -66,6 +66,8 @@ def run_bot():
             dp.add_handler(CommandHandler("ai_api", ai.ai_api_command))
             dp.add_handler(CommandHandler("git_info", git_info.git_info))
             dp.add_handler(CommandHandler("kirim", kirim.kirim))
+            dp.add_handler(CommandHandler("torrent", torrent.torrent))
+            dp.add_handler(CommandHandler("torrent_status", torrent.torrent_status_cmd))
 
             # Handle callbacks for start command
             from telegram.ext import CallbackQueryHandler
@@ -89,6 +91,8 @@ def run_bot():
             register("ai_api", ai.ai_api_command)
             register("git_info", git_info.git_info)
             register("kirim", kirim.kirim)
+            register("torrent", torrent.torrent)
+            register("torrent_status", torrent.torrent_status_cmd)
             # Legacy hyphen support
             register("zero-tier-status", zerotier.zero_tier_status)
             register("ai-api", ai.ai_api_command)

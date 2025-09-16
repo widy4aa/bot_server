@@ -21,7 +21,12 @@ class Config:
     
     # Security Configuration
     SUPERUSER_IDS = [int(id.strip()) for id in os.getenv('SUPERUSER_IDS', '796058175').split(',') if id.strip()]
-    
+
+    # qBittorrent WebUI configuration (optional)
+    QB_URL = os.getenv('QB_URL', 'http://127.0.0.1:8080')
+    QB_USER = os.getenv('QB_USER')  # set in .env (do NOT hardcode credentials in source)
+    QB_PASS = os.getenv('QB_PASS')  # set in .env (do NOT hardcode credentials in source)
+
     # File Paths
     BASE_DIR = os.path.dirname(os.path.dirname(__file__))
     AUTHORIZED_IDS_FILE_PATH = os.path.join(BASE_DIR, 'user.csv')

@@ -30,6 +30,10 @@ Panduan ringkas ini menjelaskan perintah utama, cara pakai AI, dan beberapa cata
   - Tampilkan informasi repository git: branch, stash, modified files, dan latest commit
 - **/kirim**
   - Balas pesan yang berisi file (document/photo/audio/video) lalu ketik /kirim untuk menyimpan file ke folder Downloads
+- **/torrent** <magnet-link>
+  - Tambahkan magnet link atau file .torrent ke antrian download (maks 1 aktif, via qBittorrent)
+- **/torrent_status**
+  - Cek status download torrent aktif dan antrian
 
 ## Catatan Format Output
 
