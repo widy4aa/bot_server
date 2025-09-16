@@ -68,6 +68,7 @@ def run_bot():
             dp.add_handler(CommandHandler("kirim", kirim.kirim))
             dp.add_handler(CommandHandler("torrent", torrent.torrent))
             dp.add_handler(CommandHandler("torrent_status", torrent.torrent_status_cmd))
+            dp.add_handler(CommandHandler("download_status", download.download_status))
 
             # Handle callbacks for start command
             from telegram.ext import CallbackQueryHandler
@@ -93,6 +94,7 @@ def run_bot():
             register("kirim", kirim.kirim)
             register("torrent", torrent.torrent)
             register("torrent_status", torrent.torrent_status_cmd)
+            register("download_status", download.download_status)
             # Legacy hyphen support
             register("zero-tier-status", zerotier.zero_tier_status)
             register("ai-api", ai.ai_api_command)

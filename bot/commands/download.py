@@ -203,5 +203,38 @@ def download(update: Update, context: CallbackContext):
     except Exception as e:
         update.message.reply_text(ai_render(f"❌ Error: {str(e)}"))
 
+
+def download_status(update: Update, context: CallbackContext):
+    """Report current download slot and last file info"""
+    msg = ""
+    if last_download:
+        url = last_download.get('url', '-')
+        status = last_download.get('status', '-')
+        files = last_download.get('files', [])
+        start_time = last_download.get('start_time', None)
+        msg += f"**🔄 Download Aktif:**\n\n"
+        msg += f"**URL:** `{url}`\n"
+        msg += f"**Status:** `{status}`\n"
+        if files:
+            msg += f"**File terakhir:** `{os.path.basename(files[-1])}`\n"
+        else:
+            # Scan Downloads dir for newest file
+            try:
+                from pathlib import Path
+                newest = None
+                for file_path in Path(DOWNLOAD_DIR).iterdir():
+                    if file_path.is_file() and (not start_time or file_path.stat().st_mtime >= start_time):
+                        if not newest or file_path.stat().st_mtime > newest.stat().st_mtime:
+                            newest = file_path
+                if newest:
+                    msg += f"**File terbaru:** `{newest.name}`\n"
+            except Exception:
+                pass
+    else:
+        msg = "**💤 Tidak ada download aktif**"
+    ai_rendered = ai_render(msg)
+    update.message.reply_text(ai_rendered, parse_mode="HTML")
+
+
 # Register command
 register("download", download_command)
