@@ -51,13 +51,15 @@ def run_bot():
             updater = Updater(bot=bot_instance, use_context=True)
             dp = updater.dispatcher
 
-            # Register all command handlers
-            from .commands import start, help, bash, sudo, download, uploads, update, zerotier, ai, shutdown, git_info, kirim, torrent
+                        # Register all command handlers
+            from .commands import start, help, bash, sudo, download, uploads, update, zerotier, ai, shutdown, git_info, kirim, torrent, jadwal
             dp.add_handler(CommandHandler("start", start.start))
             dp.add_handler(CommandHandler("help", help.help_command))
             dp.add_handler(CommandHandler("bash", bash.bash))
             dp.add_handler(CommandHandler("sudo", sudo.sudo))
             dp.add_handler(CommandHandler("download", download.download))
+            dp.add_handler(CommandHandler("downloads", download.download_command))
+            dp.add_handler(CommandHandler("download_status", download.download_status))
             dp.add_handler(CommandHandler("uploads", uploads.uploads))
             dp.add_handler(CommandHandler("update", update.update))
             dp.add_handler(CommandHandler("shutdown", shutdown.shutdown))
@@ -68,6 +70,10 @@ def run_bot():
             dp.add_handler(CommandHandler("kirim", kirim.kirim))
             dp.add_handler(CommandHandler("torrent", torrent.torrent))
             dp.add_handler(CommandHandler("torrent_status", torrent.torrent_status_cmd))
+            dp.add_handler(CommandHandler("jadwal", jadwal.jadwal))
+            dp.add_handler(CommandHandler("upload_jadwal", jadwal.upload_jadwal))
+            dp.add_handler(CommandHandler("reminder_on", jadwal.reminder_on))
+            dp.add_handler(CommandHandler("reminder_off", jadwal.reminder_off))
             dp.add_handler(CommandHandler("download_status", download.download_status))
 
             # Handle callbacks for start command
@@ -95,6 +101,10 @@ def run_bot():
             register("torrent", torrent.torrent)
             register("torrent_status", torrent.torrent_status_cmd)
             register("download_status", download.download_status)
+            register("jadwal", jadwal.jadwal)
+            register("upload_jadwal", jadwal.upload_jadwal)
+            register("reminder_on", jadwal.reminder_on)
+            register("reminder_off", jadwal.reminder_off)
             # Legacy hyphen support
             register("zero-tier-status", zerotier.zero_tier_status)
             register("ai-api", ai.ai_api_command)

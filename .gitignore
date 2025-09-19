@@ -13,6 +13,9 @@ env/
 .env
 .env.*
 
+# Personal schedule file (contains private data)
+jadwal.csv
+
 # Editor/IDE
 .vscode/
 .idea/
